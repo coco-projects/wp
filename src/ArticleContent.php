@@ -6,6 +6,13 @@
     {
         protected array $contents = [];
 
+        public function videoPlayer1($src): static
+        {
+            $this->contents[] = static::wpWrapper('shortcode', '[evp_embed_video url="' . $src . '" autoplay="true"]');
+
+            return $this;
+        }
+
         public function video($src): static
         {
             $this->contents[] = static::wpWrapper('video', '<figure class="wp-block-video"><video controls src="' . $src . '"></video></figure>');
