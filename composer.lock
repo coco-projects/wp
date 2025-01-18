@@ -89,16 +89,16 @@
         },
         {
             "name": "coco-project/table-manager",
-            "version": "v1.0.11",
+            "version": "v1.0.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/coco-projects/table-manager.git",
-                "reference": "8f864bb50f8bb73256254953e549d68e6ee7a583"
+                "reference": "9ae56798e4442f48eb30fe7068d020b023e3fe7a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/coco-projects/table-manager/zipball/8f864bb50f8bb73256254953e549d68e6ee7a583",
-                "reference": "8f864bb50f8bb73256254953e549d68e6ee7a583",
+                "url": "https://api.github.com/repos/coco-projects/table-manager/zipball/9ae56798e4442f48eb30fe7068d020b023e3fe7a",
+                "reference": "9ae56798e4442f48eb30fe7068d020b023e3fe7a",
                 "shasum": ""
             },
             "require": {
@@ -125,9 +125,9 @@
             ],
             "support": {
                 "issues": "https://github.com/coco-projects/table-manager/issues",
-                "source": "https://github.com/coco-projects/table-manager/tree/v1.0.11"
+                "source": "https://github.com/coco-projects/table-manager/tree/v1.0.12"
             },
-            "time": "2025-01-13T02:44:11+00:00"
+            "time": "2025-01-18T03:52:54+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -294,16 +294,16 @@
         },
         {
             "name": "php-di/invoker",
-            "version": "2.3.4",
+            "version": "2.3.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-DI/Invoker.git",
-                "reference": "33234b32dafa8eb69202f950a1fc92055ed76a86"
+                "reference": "59f15608528d8a8838d69b422a919fd6b16aa576"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-DI/Invoker/zipball/33234b32dafa8eb69202f950a1fc92055ed76a86",
-                "reference": "33234b32dafa8eb69202f950a1fc92055ed76a86",
+                "url": "https://api.github.com/repos/PHP-DI/Invoker/zipball/59f15608528d8a8838d69b422a919fd6b16aa576",
+                "reference": "59f15608528d8a8838d69b422a919fd6b16aa576",
                 "shasum": ""
             },
             "require": {
@@ -337,7 +337,7 @@
             ],
             "support": {
                 "issues": "https://github.com/PHP-DI/Invoker/issues",
-                "source": "https://github.com/PHP-DI/Invoker/tree/2.3.4"
+                "source": "https://github.com/PHP-DI/Invoker/tree/2.3.6"
             },
             "funding": [
                 {
@@ -345,7 +345,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-09-08T09:24:21+00:00"
+            "time": "2025-01-17T12:49:27+00:00"
         },
         {
             "name": "php-di/php-di",
