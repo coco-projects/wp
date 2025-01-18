@@ -16,14 +16,29 @@
     use Coco\wp\tables\Usermeta;
     use Coco\wp\tables\Users;
     use DI\Container;
-    use Monolog\Handler\RedisHandler;
 
     class Manager
     {
         protected ?Container $container = null;
         protected array      $tables    = [];
 
-        public function __construct(?Container $container = null)
+        protected bool $enableRedisLog = false;
+        protected bool $enableEchoLog  = false;
+
+        protected ?string $logNamespace;
+
+        protected string $redisHost     = '127.0.0.1';
+        protected string $redisPassword = '';
+        protected int    $redisPort     = 6379;
+        protected int    $redisDb       = 14;
+
+        protected string $mysqlDb;
+        protected string $mysqlHost     = '127.0.0.1';
+        protected string $mysqlUsername = 'root';
+        protected string $mysqlPassword = 'root';
+        protected int    $mysqlPort     = 3306;
+
+        public function __construct(protected string $redisNamespace, ?Container $container = null)
         {
             if (!is_null($container))
             {
@@ -33,6 +48,30 @@
             {
                 $this->container = new Container();
             }
+
+            $this->redisNamespace .= '-wp';
+            $this->logNamespace   = $this->redisNamespace . ':tg-log:';
+        }
+
+        public function initServer(): static
+        {
+            $this->initMysql();
+
+            return $this;
+        }
+
+        public function setEnableEchoLog(bool $enableEchoLog): static
+        {
+            $this->enableEchoLog = $enableEchoLog;
+
+            return $this;
+        }
+
+        public function setEnableRedisLog(bool $enableRedisLog): static
+        {
+            $this->enableRedisLog = $enableRedisLog;
+
+            return $this;
         }
 
         public function initTableStruct(string $tablePrefix = 'wp_'): void
@@ -128,22 +167,24 @@
         * ------------------------------------------------------
         *
         * */
-        public function enableEchoHandler(): static
+
+        public function setMysqlConfig($db, $host = '127.0.0.1', $username = 'root', $password = 'root', $port = 3306): static
         {
-            $this->getMysqlClient()
-                ->addStdoutHandler(callback: function(\Monolog\Handler\StreamHandler $handler, TableRegistry $_this) {
-                    $handler->setFormatter(new \Coco\logger\StandardFormatter());
-                });
+            $this->mysqlHost     = $host;
+            $this->mysqlPassword = $password;
+            $this->mysqlUsername = $username;
+            $this->mysqlPort     = $port;
+            $this->mysqlDb       = $db;
 
             return $this;
         }
 
-        public function enableRedisHandler(string $redisHost = '127.0.0.1', int $redisPort = 6379, string $password = '', int $db = 10, string $logName = 'redis_log'): static
+        public function setRedisConfig(string $host = '127.0.0.1', string $password = '', int $port = 6379, int $db = 9): static
         {
-            $this->getMysqlClient()
-                ->addRedisHandler(redisHost: $redisHost, redisPort: $redisPort, password: $password, db: $db, logName: $logName, callback: function(RedisHandler $handler, TableRegistry $_this) {
-                    $handler->setFormatter(new \Coco\logger\StandardFormatter());
-                });
+            $this->redisHost     = $host;
+            $this->redisPassword = $password;
+            $this->redisPort     = $port;
+            $this->redisDb       = $db;
 
             return $this;
         }
@@ -158,14 +199,27 @@
             return $this->container->get('mysqlClient');
         }
 
-        public function initMysql($db, $host = '127.0.0.1', $username = 'root', $password = 'root', $port = 3306): static
+        protected function initMysql(): static
         {
-            $this->container->set('mysqlClient', function(Container $container) use ($host, $port, $username, $password, $db) {
+            $this->container->set('mysqlClient', function(Container $container) {
 
-                $registry = TableRegistry::initMysqlClient($db, $host, $username, $password, $port);
-                $registry->setStandardLogger('wp-log');
+                $registry = new TableRegistry($this->mysqlDb, $this->mysqlHost, $this->mysqlUsername, $this->mysqlPassword, $this->mysqlPort,);
+
+                $logName = 'wp-log';
+                $registry->setStandardLogger($logName);
+
+                if ($this->enableRedisLog)
+                {
+                    $registry->addRedisHandler(redisHost: $this->redisHost, redisPort: $this->redisPort, password: $this->redisPassword, db: $this->redisDb, logName: $this->logNamespace . $logName, callback: TableRegistry::getStandardFormatter());
+                }
+
+                if ($this->enableEchoLog)
+                {
+                    $registry->addStdoutHandler(TableRegistry::getStandardFormatter());
+                }
 
                 return $registry;
+
             });
 
             return $this;
