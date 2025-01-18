@@ -6,9 +6,18 @@
     {
         protected array $contents = [];
 
-        public function videoPlayer1($src): static
+        /**
+         * https://noorsplugin.com/wordpress-video-plugin/
+         *
+         * @param string $src
+         * @param bool   $autoplay
+         * @param string $preload auto,none,metadata
+         *
+         * @return $this
+         */
+        public function videoPlayer1(string $src, bool $autoplay = false, string $preload = "auto"): static
         {
-            $this->contents[] = static::wpWrapper('shortcode', '[evp_embed_video url="' . $src . '" autoplay="true"]');
+            $this->contents[] = static::wpWrapper('shortcode', '[evp_embed_video url="' . $src . '" autoplay="' . ($autoplay ? 'true' : 'false') . '"]');
 
             return $this;
         }
