@@ -487,8 +487,13 @@
             ]);
         }
 
-        public function addPost($title, $postContent, $typeId): int|string
+        public function addPost($title, $postContent, $typeId, $guid = null): int|string
         {
+            if (is_null($guid))
+            {
+                $guid = hrtime(true);
+            }
+
             $termRelationshipsTable = $this->getTermRelationshipsTable();
             $postsTable             = $this->getPostsTable();
 
@@ -520,7 +525,7 @@
                 $postsTable->getPostModifiedGmtField()     => $formatted_post_date_gmt,
                 $postsTable->getPostContentFilteredField() => '',
                 $postsTable->getPostParentField()          => 0,
-                $postsTable->getGuidField()                => 0,
+                $postsTable->getGuidField()                => $guid,
                 $postsTable->getMenuOrderField()           => 0,
                 $postsTable->getPostTypeField()            => 'post',
                 $postsTable->getPostMimeTypeField()        => 0,

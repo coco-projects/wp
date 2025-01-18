@@ -2,7 +2,6 @@
 
     require 'common.php';
 
-    $content = new \Coco\wp\ArticleContent();
 
     $telegraphImg1 = 'https://telegra.ph/file/1310a205f732f9bae8141.jpg';
     $telegraphImg2 = 'https://telegra.ph/file/10bb4bf90be7fd67cad77.jpg';
@@ -19,6 +18,7 @@
 
     $telegraphTwitter = 'https://twitter.com/elonmusk/status/1815929451256979636';
 
+    $content = new \Coco\wp\ArticleContent();
     $content->hr();
     $content->hr();
     $content->a('http://baidu.com')->aBlock('http://baidu.com', '百度');
