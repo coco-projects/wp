@@ -487,7 +487,7 @@
             ]);
         }
 
-        public function addPost($title, $postContent, $typeId, $guid = null): int|string
+        public function addPost(string $title, string $postContent, string $typeId, string $guid = null): int|string
         {
             if (is_null($guid))
             {
@@ -537,6 +537,54 @@
                 $termRelationshipsTable->getObjectIdField()       => $postId,
                 $termRelationshipsTable->getTermTaxonomyIdField() => $typeId,
             ]);
+        }
+
+        public function updatePostByGuid(string $guid, string $title = null, string $postContent = null): int
+        {
+            $postsTable = $this->getPostsTable();
+
+            $data = [];
+
+            if (!is_null($title))
+            {
+                $data[$postsTable->getPostTitleField()] = $title;
+            }
+            if (!is_null($postContent))
+            {
+                $data[$postsTable->getPostContentField()] = $postContent;
+            }
+
+            return $postsTable->tableIns()->where([
+                [
+                    $postsTable->getGuidField(),
+                    '=',
+                    $guid,
+                ],
+            ])->update($data);
+        }
+
+        public function updatePostById($id, string $title = null, string $postContent = null): int
+        {
+            $postsTable = $this->getPostsTable();
+
+            $data = [];
+
+            if (!is_null($title))
+            {
+                $data[$postsTable->getPostTitleField()] = $title;
+            }
+            if (!is_null($postContent))
+            {
+                $data[$postsTable->getPostContentField()] = $postContent;
+            }
+
+            return $postsTable->tableIns()->where([
+                [
+                    $postsTable->getPkField(),
+                    '=',
+                    $id,
+                ],
+            ])->update($data);
         }
 
         public function deleteTransient(): int|string
