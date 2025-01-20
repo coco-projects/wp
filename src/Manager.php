@@ -56,6 +56,7 @@
         public function initServer(): static
         {
             $this->initMysql();
+            $this->initRedis();
 
             return $this;
         }
@@ -725,7 +726,7 @@
 
                         $tMap[strtr($form, ["/" => "\/"])] = strtr($to, ["/" => "\/"]);
 
-                        $json  = json_encode($value);
+                        $json  = json_encode($value, 256);
                         $json  = strtr($json, $tMap);
                         $value = json_decode($json, 1);
 
@@ -748,5 +749,43 @@
             }
 
         }
+
+        protected function initRedis(): static
+        {
+            $this->container->set('redisClient', function(Container $container) {
+
+                /**
+                 * @var \Redis $redis
+                 */
+                $redis = (new \Redis());
+                $redis->connect($this->redisHost, $this->redisPort);
+                $this->redisPassword && $redis->auth($this->redisPassword);
+                $redis->select($this->redisDb);
+
+                return $redis;
+            });
+
+            return $this;
+        }
+
+        public function getRedisClient(): \Redis
+        {
+            return $this->container->get('redisClient');
+        }
+
+        public function deleteRedisLog(): void
+        {
+            $redis = $this->getRedisClient();
+
+            $pattern = $this->logNamespace . '*';
+
+            $keysToDelete = $redis->keys($pattern);
+
+            foreach ($keysToDelete as $key)
+            {
+                $redis->del($key);
+            }
+        }
+
 
     }
