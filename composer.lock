@@ -89,16 +89,16 @@
         },
         {
             "name": "coco-project/table-manager",
-            "version": "v1.0.12",
+            "version": "v1.0.13",
             "source": {
                 "type": "git",
                 "url": "https://github.com/coco-projects/table-manager.git",
-                "reference": "9ae56798e4442f48eb30fe7068d020b023e3fe7a"
+                "reference": "9886da5c2b2a45ac98984586b1e6c271645ecfa9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/coco-projects/table-manager/zipball/9ae56798e4442f48eb30fe7068d020b023e3fe7a",
-                "reference": "9ae56798e4442f48eb30fe7068d020b023e3fe7a",
+                "url": "https://api.github.com/repos/coco-projects/table-manager/zipball/9886da5c2b2a45ac98984586b1e6c271645ecfa9",
+                "reference": "9886da5c2b2a45ac98984586b1e6c271645ecfa9",
                 "shasum": ""
             },
             "require": {
@@ -125,9 +125,9 @@
             ],
             "support": {
                 "issues": "https://github.com/coco-projects/table-manager/issues",
-                "source": "https://github.com/coco-projects/table-manager/tree/v1.0.12"
+                "source": "https://github.com/coco-projects/table-manager/tree/v1.0.13"
             },
-            "time": "2025-01-18T03:52:54+00:00"
+            "time": "2025-01-21T03:06:53+00:00"
         },
         {
             "name": "laravel/serializable-closure",
