@@ -644,9 +644,18 @@
             foreach ($replacement as $name => $value)
             {
                 $this->getMysqlClient()->logInfo('【' . $name . ' ----> ' . $value . '】');
+
+                $this->getMysqlClient()->logInfo('【replaceOptions】');
                 $this->replaceOptions($name, $value);
+
+                $this->getMysqlClient()->logInfo('【replaceUsers】');
                 $this->replaceUsers($name, $value);
+
+                $this->getMysqlClient()->logInfo('【replacePosts】');
                 $this->replacePosts($name, $value);
+
+                $this->getMysqlClient()->logInfo('【replacePostmeta】');
+                $this->replacePostmeta($name, $value);
             }
         }
 
@@ -654,11 +663,12 @@
         {
             $postsTable = $this->getPostsTable();
 
-            $result = $postsTable->tableIns()->field('ID,post_content,guid')->select();
+            $result = $postsTable->tableIns()->field('ID,post_excerpt,post_content,guid')->select();
 
             foreach ($result as $item)
             {
                 $data = [
+                    "post_excerpt" => $item['post_excerpt'],
                     "post_content" => $item['post_content'],
                     "guid"         => $item['guid'],
                 ];
@@ -667,6 +677,7 @@
                 {
                     $v = strtr($v, [$form => $to]);
                 }
+
                 $this->getMysqlClient()->logInfo('posts: ' . $item['ID']);
 
                 $postsTable->tableIns()->where('ID', $item['ID'])->update($data);
@@ -717,7 +728,7 @@
                         {
                             $newOptions[$item['option_name']] = $item['option_value'];
 
-                            $this->getMysqlClient()->logInfo('反序列化出错：' . $item['option_name']);
+                            $this->getMysqlClient()->logInfo('反序列化出错：' . $item['option_value']);
 
                             continue;
                         }
@@ -741,13 +752,64 @@
 
             foreach ($newOptions as $option_name => $option_value)
             {
-
-                $this->getMysqlClient()->logInfo('options: ' . $option_name . ' -> ' . $option_value);
+                $this->getMysqlClient()->logInfo('options: ' . $option_name);
 
                 $optionsTable->tableIns()->where('option_name', $option_name)
                     ->update(['option_value' => $option_value]);
             }
+        }
 
+
+        public function replacePostmeta($form, $to): void
+        {
+            $postmetaTable = $this->getPostmetaTable();
+
+            $result     = $postmetaTable->tableIns()->select();
+            $newOptions = [];
+
+            // 遍历每个选项
+            // 将序列化过的值反序列化后，修改过来，再序列化后更新进去
+            foreach ($result as $item)
+            {
+                if (preg_match('/^[a-z]:\d+/i', $item['meta_value']))
+                {
+                    //值是被序列化过的选项
+                    if (preg_match('/^a:\d+/i', $item['meta_value']))
+                    {
+                        $value = unserialize($item['meta_value']);
+
+                        if (!is_array($value))
+                        {
+                            $newOptions[$item['meta_key']] = $item['meta_value'];
+
+                            $this->getMysqlClient()->logInfo('反序列化出错：' . $item['meta_key']);
+
+                            continue;
+                        }
+
+                        $tMap = [];
+
+                        $tMap[strtr($form, ["/" => "\/"])] = strtr($to, ["/" => "\/"]);
+
+                        $json  = json_encode($value, 256);
+                        $json  = strtr($json, $tMap);
+                        $value = json_decode($json, 1);
+
+                        $newOptions[$item['meta_key']] = serialize($value);
+                    }
+                }
+                else
+                {
+                    $newOptions[$item['meta_key']] = strtr($item['meta_value'], [$form => $to]);
+                }
+            }
+
+            foreach ($newOptions as $meta_key => $meta_value)
+            {
+                $this->getMysqlClient()->logInfo('meta_key: ' . $meta_key);
+
+                $postmetaTable->tableIns()->where('meta_key', $meta_key)->update(['meta_value' => $meta_value]);
+            }
         }
 
         protected function initRedis(): static
