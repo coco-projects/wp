@@ -643,7 +643,7 @@
 
             foreach ($replacement as $name => $value)
             {
-                $this->getMysqlClient()->logInfo('【' . $name . ' ----> ' . $value . '】');
+                $this->getMysqlClient()->logInfo('【' . $name . '】 ----> 【' . $value . '】');
 
                 $this->getMysqlClient()->logInfo('【replaceOptions】');
                 $this->replaceOptions($name, $value);
@@ -729,19 +729,24 @@
                             $newOptions[$item['option_name']] = $item['option_value'];
 
                             $this->getMysqlClient()->logInfo('反序列化出错：' . $item['option_value']);
-
-                            continue;
                         }
+                        else
+                        {
+                            $tMap = [];
 
-                        $tMap = [];
+                            $tMap[strtr($form, ["/" => "\/"])] = strtr($to, ["/" => "\/"]);
 
-                        $tMap[strtr($form, ["/" => "\/"])] = strtr($to, ["/" => "\/"]);
+                            $json  = json_encode($value, 256);
+                            $json  = strtr($json, $tMap);
+                            $value = json_decode($json, 1);
 
-                        $json  = json_encode($value, 256);
-                        $json  = strtr($json, $tMap);
-                        $value = json_decode($json, 1);
+                            $newOptions[$item['option_name']] = serialize($value);
+                        }
+                    }
+                    //序列化过，值不是数组，不知道什么类型，先不替换
+                    else
+                    {
 
-                        $newOptions[$item['option_name']] = serialize($value);
                     }
                 }
                 else
@@ -764,51 +769,59 @@
         {
             $postmetaTable = $this->getPostmetaTable();
 
-            $result     = $postmetaTable->tableIns()->select();
-            $newOptions = [];
+            $result   = $postmetaTable->tableIns()->select();
+            $newValue = [];
 
             // 遍历每个选项
             // 将序列化过的值反序列化后，修改过来，再序列化后更新进去
             foreach ($result as $item)
             {
+                //值是被序列化过的选项
                 if (preg_match('/^[a-z]:\d+/i', $item['meta_value']))
                 {
-                    //值是被序列化过的选项
+                    $value = unserialize($item['meta_value']);
+
+                    //序列化过，值是数组
                     if (preg_match('/^a:\d+/i', $item['meta_value']))
                     {
-                        $value = unserialize($item['meta_value']);
-
+                        //反序列化失败
                         if (!is_array($value))
                         {
-                            $newOptions[$item['meta_key']] = $item['meta_value'];
+                            $newValue[$item['meta_id']] = $item['meta_value'];
 
                             $this->getMysqlClient()->logInfo('反序列化出错：' . $item['meta_key']);
-
-                            continue;
                         }
+                        else
+                        {
+                            $tMap = [];
 
-                        $tMap = [];
+                            $tMap[strtr($form, ["/" => "\/"])] = strtr($to, ["/" => "\/"]);
 
-                        $tMap[strtr($form, ["/" => "\/"])] = strtr($to, ["/" => "\/"]);
+                            $json  = json_encode($value, 256);
+                            $json  = strtr($json, $tMap);
+                            $value = json_decode($json, 1);
 
-                        $json  = json_encode($value, 256);
-                        $json  = strtr($json, $tMap);
-                        $value = json_decode($json, 1);
+                            $newValue[$item['meta_id']] = serialize($value);
+                        }
+                    }
+                    //序列化过，值不是数组，不知道什么类型，先不替换
+                    else
+                    {
 
-                        $newOptions[$item['meta_key']] = serialize($value);
                     }
                 }
+                //值没有被序列化过
                 else
                 {
-                    $newOptions[$item['meta_key']] = strtr($item['meta_value'], [$form => $to]);
+                    $newValue[$item['meta_id']] = strtr($item['meta_value'], [$form => $to]);
                 }
             }
 
-            foreach ($newOptions as $meta_key => $meta_value)
+            foreach ($newValue as $meta_id => $meta_value)
             {
-                $this->getMysqlClient()->logInfo('meta_key: ' . $meta_key);
+                $this->getMysqlClient()->logInfo('meta_id: ' . $meta_id);
 
-                $postmetaTable->tableIns()->where('meta_key', $meta_key)->update(['meta_value' => $meta_value]);
+                $postmetaTable->tableIns()->where('meta_id', $meta_id)->update(['meta_value' => $meta_value]);
             }
         }
 
