@@ -1,5 +1,9 @@
 <?php
 
+    use Coco\htmlBuilder\dom\DoubleTag;
+    use Coco\wp\ArticleContent;
+    use Coco\wp\Tag;
+
     require 'common.php';
 
     $telegraphImg1 = 'https://telegra.ph/file/1310a205f732f9bae8141.jpg';
@@ -17,39 +21,24 @@
 
     $telegraphTwitter = 'https://twitter.com/elonmusk/status/1815929451256979636';
 
-    $str = \Coco\wp\ArticleContent::wpWrapper('paragraph', [
-        '[string]',
-        function() {
-            return '[function]';
-        },
+    $str = ArticleContent::paragraph([
+        DoubleTag::ins('div')->inner(function(DoubleTag $this_, array &$inner) {
+            $this_->getAttr('class')->addAttr('layui-col-xs4');
+            $inner[] = 'column 2';
+        })->render(),
+        PHP_EOL,
+
+        Tag::br(),
+        PHP_EOL,
+
+        Tag::a('https://baidu.com', 'a标签'),
+        PHP_EOL,
+
+        Tag::a('https://baidu.com'),
+        PHP_EOL,
     ]);
 
     echo $str;
 
 
 
-
-
-
-    /*
-        $content = new \Coco\wp\ArticleContent();
-        $content->hr();
-        $content->hr();
-        $content->a('http://baidu.com')->aBlock('http://baidu.com', '百度');
-        $content->audio('http://ccc.xx');
-        $content->hr();
-        $content->video($telegraphvideo1);
-        $content->hr();
-        $content->video($telegraphvideo2);
-        $content->hr();
-        $content->p('这是一个段落');
-        $content->hr();
-        $content->image($telegraphImg1);
-        $content->hr();
-        $content->image($telegraphImg2);
-
-        echo $content;
-
-        $manager->addPost('测试文件111', $content, 1);
-        $manager->addPost('测试文件222', $content, 3);
-        $manager->addPost('测试文件333', $content, 3);*/

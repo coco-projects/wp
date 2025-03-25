@@ -4,85 +4,48 @@
 
     class ArticleContent
     {
-        protected array $contents = [];
 
-        /**
-         * https://noorsplugin.com/wordpress-video-plugin/
-         *
-         * @param string $src
-         * @param bool   $autoplay
-         * @param string $preload auto,none,metadata
-         *
-         * @return $this
-         */
-        public function videoPlayer1(string $src, bool $autoplay = false, string $preload = "auto"): static
+        public static function table(mixed $content, $attrs = []): string
         {
-            $this->contents[] = static::wpWrapper('shortcode', '[evp_embed_video url="' . $src . '" autoplay="' . ($autoplay ? 'true' : 'false') . '"]');
-
-            return $this;
+            return static::wpWrapper('table', $content, $attrs);
         }
 
-        public function video($src): static
+        public static function buttons(mixed $content, $attrs = []): string
         {
-            $this->contents[] = static::wpWrapper('video', '<figure class="wp-block-video"><video controls src="' . $src . '"></video></figure>');
-
-            return $this;
+            return static::wpWrapper('buttons', $content, $attrs);
         }
 
-        public function audio($src): static
+        public static function button(mixed $content, $attrs = []): string
         {
-            $this->contents[] = static::wpWrapper('audio', '<figure class="wp-block-audio"><audio controls src="' . $src . '"></audio></figure>');
-
-            return $this;
+            return static::wpWrapper('button', $content, $attrs);
         }
 
-        public function image($src): static
+        public static function audio(mixed $content, $attrs = []): string
         {
-            $this->contents[] = static::wpWrapper('image', '<figure class="wp-block-image size-large"><img src="' . $src . '" alt=""/></figure>');
-
-            return $this;
+            return static::wpWrapper('audio', $content, $attrs);
         }
 
-        public function hr(): static
+        public static function video(mixed $content, $attrs = []): string
         {
-            $this->contents[] = static::separator();
-
-            return $this;
+            return static::wpWrapper('video', $content, $attrs);
         }
 
-        public function a($link, $text = ''): static
+        public static function shortcode(mixed $content, $attrs = []): string
         {
-            !$text && $text = $link;
-
-            $this->contents[] = static::paragraph("<a target='_blank' href='{$link}'>$text</a>");
-
-            return $this;
+            return static::wpWrapper('shortcode', $content, $attrs);
         }
 
-        public function aBlock($link, $text = ''): static
+        public static function paragraph(mixed $content, $attrs = []): string
         {
-            !$text && $text = $link;
-
-            $this->contents[] = static::paragraph("<p><a target='_blank' href='{$link}'>$text</a></p>");
-
-            return $this;
+            return static::wpWrapper('paragraph', $content, $attrs);
         }
 
-        public function p($text): static
+        public static function image(mixed $content, $attrs = []): string
         {
-            $this->contents[] = static::paragraph("<p>$text</p>");
-
-            return $this;
+            return static::wpWrapper('image', $content, $attrs);
         }
 
-        /*-----------------------------------------------------------------------*/
-
-        public static function paragraph(string $content): string
-        {
-            return static::wpWrapper('paragraph', $content);
-        }
-
-        public static function html(string $content): string
+        public static function html(mixed $content): string
         {
             return static::wpWrapper('html', $content);
         }
@@ -92,8 +55,12 @@
             return static::wpWrapper('separator', '<hr class="wp-block-separator has-alpha-channel-opacity"/>');
         }
 
-        public static function wpWrapper(string $tagName, string $content = '', $attrs = []): string
+        /*-------------------------------------------------------*/
+
+        public static function wpWrapper(string $tagName, mixed $content = '', $attrs = []): string
         {
+            $str = static::contentToString($content);
+
             $temp = <<<str
 <!-- wp:__TAG__ __ATTR__ -->
 __CONTENT__
@@ -104,15 +71,58 @@ str;
 
             return strtr($temp, [
                 "__TAG__"     => $tagName,
-                "__CONTENT__" => $content,
+                "__CONTENT__" => $str,
                 "__ATTR__"    => count($attrs) ? json_encode($attrs, 256) : '',
             ]);
         }
 
-
-        /*-----------------------------------------------------------------------*/
-        public function __toString(): string
+        private static function contentToString(mixed $content)
         {
-            return implode('', $this->contents);
+            static $processed = []; // 记录已处理的对象或数组，避免死循环
+
+            $str = '';
+
+            if (is_array($content))
+            {
+                $t = [];
+                foreach ($content as $k => $v)
+                {
+                    $t[] = static::contentToString($v);
+                }
+                $str = implode('', $t);
+            }
+            elseif (is_callable($content))
+            {
+                $str = call_user_func($content);
+            }
+            elseif (is_object($content))
+            {
+                // 检查是否已经处理过这个对象，避免死循环
+                if (in_array(spl_object_hash($content), $processed))
+                {
+                    return ''; // 如果已经处理过，返回空字符串
+                }
+
+                $processed[] = spl_object_hash($content); // 标记这个对象已经处理过
+
+                // 检查对象是否实现了 __toString() 方法
+                if (method_exists($content, '__toString'))
+                {
+                    $str = (string)$content;
+                }
+                else
+                {
+                    // 如果没有实现 __toString() 方法，忽略该对象
+                    $str = '';
+                }
+            }
+            else
+            {
+                // 如果是其他类型，直接转为字符串
+                $str = (string)$content;
+            }
+
+            return $str;
         }
+
     }
