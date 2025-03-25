@@ -531,13 +531,132 @@
                 $postsTable->getPostTypeField()            => 'post',
                 $postsTable->getPostMimeTypeField()        => 0,
                 $postsTable->getCommentCountField()        => 0,
-
             ]);
 
             return $termRelationshipsTable->tableIns()->insertGetId([
                 $termRelationshipsTable->getObjectIdField()       => $postId,
                 $termRelationshipsTable->getTermTaxonomyIdField() => $typeId,
             ]);
+        }
+
+        public function searchPostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false)
+        {
+            $postsTable = $this->getPostsTable();
+
+            $ins = $postsTable->tableIns();
+
+            $whereTitle   = [];
+            $whereContent = [];
+
+            if ($isFullMatch)
+            {
+                $whereTitle   = [
+                    [
+                        $postsTable->getPostTitleField(),
+                        '=',
+                        $keyword,
+                    ],
+                ];
+                $whereContent = [
+                    [
+                        $postsTable->getPostContentField(),
+                        '=',
+                        $keyword,
+                    ],
+                ];
+            }
+            else
+            {
+                $whereTitle   = [
+                    [
+                        $postsTable->getPostTitleField(),
+                        'like',
+                        "%{$keyword}%",
+                    ],
+                ];
+                $whereContent = [
+                    [
+                        $postsTable->getPostContentField(),
+                        'like',
+                        "%{$keyword}%",
+                    ],
+                ];
+            }
+
+            $ins->where($whereTitle);
+
+            if ($includeContent)
+            {
+                $ins->whereOr($whereContent);
+            }
+
+            return $ins->select();
+        }
+
+        public function deletePostById(int|array $id)
+        {
+            if (is_int($id))
+            {
+                $ids = [$id];
+            }
+            else
+            {
+                $ids = $id;
+            }
+
+            $postsTable             = $this->getPostsTable();
+            $termRelationshipsTable = $this->getTermRelationshipsTable();
+            $postmetaTable          = $this->getPostmetaTable();
+            $commentsTable          = $this->getCommentsTable();
+
+            $termRelationshipsTable->tableIns()->where([
+                [
+                    $termRelationshipsTable->getObjectIdField(),
+                    'in',
+                    $ids,
+                ],
+            ])->delete();
+
+            $postmetaTable->tableIns()->where([
+                [
+                    $postmetaTable->getPostIdField(),
+                    'in',
+                    $ids,
+                ],
+            ])->delete();
+
+            $commentsTable->tableIns()->where([
+                [
+                    $commentsTable->getCommentPostIDField(),
+                    'in',
+                    $ids,
+                ],
+            ])->delete();
+
+            return $postsTable->tableIns()->where([
+                [
+                    $postsTable->getPkField(),
+                    'in',
+                    $ids,
+                ],
+            ])->delete();
+        }
+
+        public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false)
+        {
+            $postsTable = $this->getPostsTable();
+            $posts      = $this->searchPostByKeyword($keyword, $includeContent, $isFullMatch);
+
+            $ids = [];
+            if (count($posts))
+            {
+                foreach ($posts as $k => $post)
+                {
+                    $ids[] = $post[$postsTable->getPkField()];
+                }
+            }
+
+            return $this->deletePostById($ids);
         }
 
         public function updatePostByGuid(string $guid, string $title = null, string $postContent = null): int
@@ -764,7 +883,6 @@
             }
         }
 
-
         public function replacePostmeta($form, $to): void
         {
             $postmetaTable = $this->getPostmetaTable();
@@ -862,5 +980,137 @@
             }
         }
 
+        public function updateAllPostView($viewsMin, $viewsMax)
+        {
+            //----------------------------------------------------------------
+
+            //所有文章的id
+            $postsTable = $this->getPostsTable();
+            $postIds    = $postsTable->tableIns()->where([
+                [
+                    $postsTable->getPostTypeField(),
+                    '=',
+                    'post',
+                ],
+            ])->order($postsTable->getPkField(), 'asc')->column($postsTable->getPkField());
+
+            //----------------------------------------------------------------
+
+            //构造每个文章的views
+            $viewsArray    = [];
+            $postmetaTable = $this->getPostmetaTable();
+
+            foreach ($postIds as $id)
+            {
+                $viewsArray[] = [
+                    $postmetaTable->getPostIdField()    => $id,
+                    $postmetaTable->getMetaKeyField()   => 'views',
+                    $postmetaTable->getMetaValueField() => rand($viewsMin, $viewsMax),
+                ];
+            }
+
+            //先删除所有的view，再重新写入
+            $postmetaTable->tableIns()->where([
+                [
+                    $postmetaTable->getMetaKeyField(),
+                    '=',
+                    'views',
+                ],
+            ])->delete();
+
+            $postmetaTable->tableIns()->insertAll($viewsArray);
+        }
+
+//        $begin = '2024-1-5';
+//        $end   = date('Y-m-d');
+//        $times = 222;
+        public function updateAllPostPublishTime($begin, $end, $times)
+        {
+            $postsTable = $this->getPostsTable();
+            $ids        = $postsTable->tableIns()->field(implode(',', [
+                $postsTable->getPkField(),
+            ]))->order($postsTable->getPkField(), 'asc')->select();
+
+            $totalArticles = count($ids);
+
+            $updateTimes  = static::updateArticleCreateTime($begin, $end, $times, $totalArticles);
+            $itemPerTimes = 0;
+
+            $cishu = 0;
+            $data  = $updateTimes[$cishu];
+
+            foreach ($ids as $k => $id)
+            {
+                if (!$itemPerTimes)
+                {
+                    $data = $updateTimes[$cishu];
+                    //每次更新了几条
+                    $itemPerTimes = $data['articles'];
+                    $cishu++;
+                }
+
+                $date    = $data['timestamp'];
+                $dateGtm = date('Y-m-d H:i:s', strtotime($data['timestamp']) - 3600 * 8);
+
+                $postsTable->tableIns()->where([
+                    [
+                        $postsTable->getPkField(),
+                        '=',
+                        $id['ID'],
+                    ],
+                ])->update([
+                    $postsTable->getPostDateField()    => $date,
+                    $postsTable->getPostDateGmtField() => $dateGtm,
+
+                    $postsTable->getPostModifiedField()    => $date,
+                    $postsTable->getPostModifiedGmtField() => $dateGtm,
+                ]);
+
+                $itemPerTimes--;
+            }
+        }
+
+
+        private static function updateArticleCreateTime($begin, $end, $times, $totalArticles)
+        {
+            // 将开始时间和结束时间转为时间戳
+            $startTimestamp = strtotime($begin);
+            $endTimestamp   = strtotime($end);
+
+            // 用于存储更新的时间点和每个时间点更新的文章数
+            $updateTimes = [];
+
+            //平均间隔秒数
+            $avgInterval = (int)(($endTimestamp - $startTimestamp) / $times);
+
+            if ($times > $totalArticles)
+            {
+                $times = $totalArticles;
+            }
+
+            //平均每次发布文章数
+            $avgArticles      = ceil($totalArticles / $times);
+            $currentTimestamp = $startTimestamp;
+
+            $remain = $totalArticles;
+
+            for ($i = 0; $i < $times; $i++)
+            {
+                $updateTimes[] = [
+                    'timestamp' => date('Y-m-d H:i:s', $currentTimestamp - rand(10000, 70000)),
+                    'articles'  => $avgArticles,
+                ];
+
+                $remain -= $avgArticles;
+                if ($remain < $avgArticles)
+                {
+                    $avgArticles = $remain;
+                }
+                $currentTimestamp += $avgInterval;
+            }
+
+            // 返回生成的更新时间点以及每个时间点的文章数量
+            return $updateTimes;
+        }
 
     }
