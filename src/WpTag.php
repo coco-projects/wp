@@ -122,6 +122,28 @@
             return ArticleContent::shortcode($shortcode);
         }
 
+        public static function DPlayer(string $url, string $theme = '#FADFA3', string $lang = 'zh-cn', string $pic = '', string $thumbnails = '', bool $unlimited = true, string $type = 'auto', string $logo = null, float $volume = 0.7, bool $loop = false, bool $screenshot = true, bool $hotkey = true, bool $preload = false, bool $mutex = false, bool $autoplay = false): string
+        {
+            $shortcode = static::singleShortcode('evp_embed_video', [
+                "url"        => $url,
+                "autoplay"   => $autoplay,
+                "theme"      => $theme,
+                "lang"       => $lang,
+                "pic"        => $pic,
+                "thumbnails" => $thumbnails,
+                "unlimited"  => $unlimited,
+                "type"       => $type,
+                "logo"       => $logo,
+                "volume"     => $volume,
+                "loop"       => $loop,
+                "screenshot" => $screenshot,
+                "hotkey"     => $hotkey,
+                "preload"    => $preload,
+                "mutex"      => $mutex,
+            ]);
+
+            return ArticleContent::shortcode($shortcode);
+        }
 
         public static function singleShortcode($name, $kv): string
         {
