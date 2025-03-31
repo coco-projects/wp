@@ -7,7 +7,7 @@
     $manager = new Manager('redis_namespace');
 
     $manager->setRedisConfig(db: 14);
-    $manager->setMysqlConfig('faka_dabaixiongshop_com_test');
+    $manager->setMysqlConfig('wp_te_10100');
 
     $manager->setEnableEchoLog(true);
     $manager->setEnableRedisLog(true);

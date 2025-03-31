@@ -539,6 +539,7 @@
             ]);
         }
 
+
         public function searchPostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false)
         {
             $postsTable = $this->getPostsTable();
@@ -618,6 +619,47 @@
             $this->deletePostById($postIds);
         }
 
+
+        public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false): int
+        {
+            $postsTable = $this->getPostsTable();
+            $posts      = $this->searchPostByKeyword($keyword, $includeContent, $isFullMatch);
+
+            $ids = [];
+            if (count($posts))
+            {
+                foreach ($posts as $k => $post)
+                {
+                    $ids[] = $post[$postsTable->getPkField()];
+                }
+            }
+
+            return $this->deletePostById($ids);
+        }
+
+
+        public function deleteAllPost(): int
+        {
+            $postsTable = $this->getPostsTable();
+
+            $ids = $postsTable->tableIns()->where([
+                [
+                    $postsTable->getPostTypeField(),
+                    '=',
+                    'post',
+                ],
+            ])->whereOr([
+                [
+                    $postsTable->getPostTypeField(),
+                    '=',
+                    'revision',
+                ],
+            ])->column($postsTable->getPkField());
+
+            return $this->deletePostById($ids);
+        }
+
+
         public function deletePostById(int|array $id): int
         {
             if (is_int($id))
@@ -665,23 +707,6 @@
                     $ids,
                 ],
             ])->delete();
-        }
-
-        public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false): int
-        {
-            $postsTable = $this->getPostsTable();
-            $posts      = $this->searchPostByKeyword($keyword, $includeContent, $isFullMatch);
-
-            $ids = [];
-            if (count($posts))
-            {
-                foreach ($posts as $k => $post)
-                {
-                    $ids[] = $post[$postsTable->getPkField()];
-                }
-            }
-
-            return $this->deletePostById($ids);
         }
 
 
