@@ -593,7 +593,32 @@
             return $ins->select();
         }
 
-        public function deletePostById(int|array $id)
+        public function deletePostByGuid(string|int|array $guid): void
+        {
+            if (is_int($guid) || is_string($guid))
+            {
+                $guids = [$guid];
+            }
+            else
+            {
+                $guids = $guid;
+            }
+
+            $postsTable = $this->getPostsTable();
+            $where      = [
+                [
+                    $postsTable->getGuidField(),
+                    'in',
+                    $guids,
+                ],
+            ];
+
+            $postIds = $postsTable->tableIns()->where($where)->column($postsTable->getPkField());
+
+            $this->deletePostById($postIds);
+        }
+
+        public function deletePostById(int|array $id): int
         {
             if (is_int($id))
             {
@@ -642,7 +667,7 @@
             ])->delete();
         }
 
-        public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false)
+        public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false): int
         {
             $postsTable = $this->getPostsTable();
             $posts      = $this->searchPostByKeyword($keyword, $includeContent, $isFullMatch);
@@ -658,6 +683,7 @@
 
             return $this->deletePostById($ids);
         }
+
 
         public function updatePostByGuid(string $guid, string $title = null, string $postContent = null): int
         {
@@ -706,6 +732,7 @@
                 ],
             ])->update($data);
         }
+
 
         public function deleteTransient(): int|string
         {
@@ -980,7 +1007,7 @@
             }
         }
 
-        public function updateAllPostView($viewsMin, $viewsMax)
+        public function updateAllPostView($viewsMin, $viewsMax): void
         {
             //----------------------------------------------------------------
 
@@ -1024,7 +1051,7 @@
 //        $begin = '2024-1-5';
 //        $end   = date('Y-m-d');
 //        $times = 222;
-        public function updateAllPostPublishTime($begin, $end, $times)
+        public function updateAllPostPublishTime($begin, $end, $times): void
         {
             $postsTable = $this->getPostsTable();
             $ids        = $postsTable->tableIns()->field(implode(',', [
