@@ -552,43 +552,35 @@
             if ($isFullMatch)
             {
                 $whereTitle   = [
-                    [
-                        $postsTable->getPostTitleField(),
-                        '=',
-                        $keyword,
-                    ],
+                    $postsTable->getPostTitleField(),
+                    '=',
+                    $keyword,
                 ];
                 $whereContent = [
-                    [
-                        $postsTable->getPostContentField(),
-                        '=',
-                        $keyword,
-                    ],
+                    $postsTable->getPostContentField(),
+                    '=',
+                    $keyword,
                 ];
             }
             else
             {
                 $whereTitle   = [
-                    [
-                        $postsTable->getPostTitleField(),
-                        'like',
-                        "%{$keyword}%",
-                    ],
+                    $postsTable->getPostTitleField(),
+                    'like',
+                    "%{$keyword}%",
                 ];
                 $whereContent = [
-                    [
-                        $postsTable->getPostContentField(),
-                        'like',
-                        "%{$keyword}%",
-                    ],
+                    $postsTable->getPostContentField(),
+                    'like',
+                    "%{$keyword}%",
                 ];
             }
 
-            $ins->where($whereTitle);
+            $ins->where(...$whereTitle);
 
             if ($includeContent)
             {
-                $ins->whereOr($whereContent);
+                $ins->whereOr(...$whereContent);
             }
 
             return $ins->select();
@@ -642,19 +634,10 @@
         {
             $postsTable = $this->getPostsTable();
 
-            $ids = $postsTable->tableIns()->where([
-                [
-                    $postsTable->getPostTypeField(),
-                    '=',
-                    'post',
-                ],
-            ])->whereOr([
-                [
-                    $postsTable->getPostTypeField(),
-                    '=',
-                    'revision',
-                ],
-            ])->column($postsTable->getPkField());
+            $ids = $postsTable->tableIns()
+                ->where($postsTable->getPostTypeField(), '=', 'post')
+                ->whereOr($postsTable->getPostTypeField(), '=', 'revision')
+                ->column($postsTable->getPkField());
 
             return $this->deletePostById($ids);
         }
