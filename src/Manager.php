@@ -539,7 +539,6 @@
             ]);
         }
 
-
         public function searchPostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false)
         {
             $postsTable = $this->getPostsTable();
@@ -611,7 +610,6 @@
             $this->deletePostById($postIds);
         }
 
-
         public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false): int
         {
             $postsTable = $this->getPostsTable();
@@ -629,7 +627,6 @@
             return $this->deletePostById($ids);
         }
 
-
         public function deleteAllPost(): int
         {
             $postsTable = $this->getPostsTable();
@@ -641,7 +638,6 @@
 
             return $this->deletePostById($ids);
         }
-
 
         public function deletePostById(int|array $id): int
         {
@@ -1104,7 +1100,6 @@
                 $itemPerTimes--;
             }
         }
-
 
         private static function updateArticleCreateTime($begin, $end, $times, $totalArticles)
         {

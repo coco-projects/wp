@@ -124,7 +124,7 @@
 
         public static function DPlayer(string $url, string $theme = '#FADFA3', string $lang = 'zh-cn', string $pic = '', string $thumbnails = '', bool $unlimited = true, string $type = 'auto', string $logo = null, float $volume = 0.7, bool $loop = false, bool $screenshot = true, bool $hotkey = true, bool $preload = false, bool $mutex = false, bool $autoplay = false): string
         {
-            $shortcode = static::singleShortcode('evp_embed_video', [
+            $shortcode = static::singleShortcode('dplayer', [
                 "url"        => $url,
                 "autoplay"   => $autoplay,
                 "theme"      => $theme,
