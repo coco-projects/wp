@@ -1019,9 +1019,9 @@
             $postsTable = $this->getPostsTable();
             $postIds    = $postsTable->tableIns()->where([
                 [
-                    $postsTable->getPostTypeField(),
-                    '=',
-                    'post',
+                    $wpPostTab->getGuidField(),
+                    'regexp',
+                    '^[0-9]{18,20}$',
                 ],
             ])->order($postsTable->getPkField(), 'asc')->column($postsTable->getPkField());
 
