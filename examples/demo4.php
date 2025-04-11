@@ -25,31 +25,3 @@
     ]);
 
     echo $str;
-
-
-
-
-
-
-    /*
-        $content = new \Coco\wp\ArticleContent();
-        $content->hr();
-        $content->hr();
-        $content->a('http://baidu.com')->aBlock('http://baidu.com', '百度');
-        $content->audio('http://ccc.xx');
-        $content->hr();
-        $content->video($telegraphvideo1);
-        $content->hr();
-        $content->video($telegraphvideo2);
-        $content->hr();
-        $content->p('这是一个段落');
-        $content->hr();
-        $content->image($telegraphImg1);
-        $content->hr();
-        $content->image($telegraphImg2);
-
-        echo $content;
-
-        $manager->addPost('测试文件111', $content, 1);
-        $manager->addPost('测试文件222', $content, 3);
-        $manager->addPost('测试文件333', $content, 3);*/

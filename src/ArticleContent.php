@@ -5,9 +5,24 @@
     class ArticleContent
     {
 
+        public static function quote(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('quote', $content, $attrs);
+        }
+
+        public static function heading(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('heading', $content, $attrs);
+        }
+
         public static function table(mixed $content, $attrs = []): string
         {
             return static::wpWrapper('table', $content, $attrs);
+        }
+
+        public static function gallery(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('gallery', $content, $attrs);
         }
 
         public static function buttons(mixed $content, $attrs = []): string
@@ -52,7 +67,7 @@
 
         public static function separator(): string
         {
-            return static::wpWrapper('separator', '<hr class="wp-block-separator has-alpha-channel-opacity"/>');
+            return static::wpWrapper('separator', Tag::hr());
         }
 
         /*-------------------------------------------------------*/

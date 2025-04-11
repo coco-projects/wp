@@ -64,7 +64,6 @@
             })->render();
         }
 
-
         public static function p(mixed $content, array $classes = []): string
         {
             return DoubleTag::ins('p')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
@@ -72,6 +71,82 @@
 
                 $inner[] = $content;
             })->render();
+        }
+
+        public static function h1(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('h1')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    'wp-block-heading',
+                ]);
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function h2(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('h2')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    'wp-block-heading',
+                ]);
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function h3(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('h3')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    'wp-block-heading',
+                ]);
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function h4(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('h4')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    'wp-block-heading',
+                ]);
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function h5(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('h5')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    'wp-block-heading',
+                ]);
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function h6(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('h6')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    'wp-block-heading',
+                ]);
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function blockquote(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('blockquote')
+                ->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                    $this_->getAttr('class')->addAttrsArray($classes);
+
+                    $inner[] = $content;
+                })->render();
         }
 
         public static function figure(mixed $content, array $classes = []): string
@@ -118,7 +193,6 @@
             })->render();
         }
 
-
         public static function audio(string $src, array $classes = []): string
         {
             return DoubleTag::ins('audio')->inner(function(DoubleTag $this_, array &$inner) use ($src, $classes) {
@@ -134,5 +208,16 @@
         public static function br(): string
         {
             return SingleTag::ins('br')->render();
+        }
+
+        public static function hr(): string
+        {
+            return SingleTag::ins('hr')->inner(function(SingleTag $this_, array &$inner) {
+                $this_->getAttr('class')->addAttrsArray([
+                    "wp-block-separator",
+                    "has-alpha-channel-opacity",
+                ]);
+
+            })->render();
         }
     }

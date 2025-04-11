@@ -16,6 +16,7 @@
     use Coco\wp\tables\Usermeta;
     use Coco\wp\tables\Users;
     use DI\Container;
+    use function _PHPStan_5473b6701\RingCentral\Psr7\str;
 
     class Manager
     {
@@ -198,6 +199,11 @@
         public function getMysqlClient(): TableRegistry
         {
             return $this->container->get('mysqlClient');
+        }
+
+        public function getRedisClient(): \Redis
+        {
+            return $this->container->get('redisClient');
         }
 
         protected function initMysql(): static
@@ -450,19 +456,137 @@
          *
          * */
 
-        public function addCategory($type): int|string
+        /*
+         *
+         * ------------------------------------------------------
+         *
+         * */
+
+        public function addCategory($name): int|string
         {
-            return $this->addTerm($type, 'category');
+            return $this->addTerm($name, 'category');
         }
 
-        public function addNavMenu($type): int|string
+        public function addNavMenu($name): int|string
         {
-            return $this->addTerm($type, 'nav_menu');
+            return $this->addTerm($name, 'nav_menu');
         }
 
-        public function addWpTheme($type): int|string
+        public function addWpTheme($name): int|string
         {
-            return $this->addTerm($type, 'wp_theme');
+            return $this->addTerm($name, 'wp_theme');
+        }
+
+        public function addPostTag($name): int|string
+        {
+            return $this->addTerm($name, 'post_tag');
+        }
+
+        public function addTopics($name): int|string
+        {
+            return $this->addTerm($name, 'topics');
+        }
+
+
+        public function getCategory($names = []): array
+        {
+            return $this->getTermsByTaxonomy('category', $names);
+        }
+
+        public function getNavMenu($names = []): array
+        {
+            return $this->getTermsByTaxonomy('nav_menu', $names);
+        }
+
+        public function getWpTheme($names = []): array
+        {
+            return $this->getTermsByTaxonomy('wp_theme', $names);
+        }
+
+        public function getPostTag($names = []): array
+        {
+            return $this->getTermsByTaxonomy('post_tag', $names);
+        }
+
+        public function getTopics($names = []): array
+        {
+            return $this->getTermsByTaxonomy('topics', $names);
+        }
+
+
+        protected function addTerm($name, $taxonomy): int|string
+        {
+            $termTable         = $this->getTermsTable();
+            $termTaxonomyTable = $this->getTermTaxonomyTable();
+
+            $termId = $termTable->tableIns()->insertGetId([
+                $termTable->getNameField()      => $name,
+                $termTable->getSlugField()      => 'term-' . hrtime(true),
+                $termTable->getTermGroupField() => 0,
+            ]);
+
+            return $termTaxonomyTable->tableIns()->insertGetId([
+                $termTaxonomyTable->getTermIdField()   => $termId,
+                $termTaxonomyTable->getTaxonomyField() => $taxonomy,
+            ]);
+        }
+
+        public function getTermsByTaxonomy(string $taxonomy, array $names = []): array
+        {
+            $termTaxonomyTable = $this->getTermTaxonomyTable();
+            $termTable         = $this->getTermsTable();
+
+            $whereNames = [];
+
+            if (count($names))
+            {
+                $whereNames = [
+                    [
+                        $termTable->getName() . '.' . $termTable->getNameField(),
+                        'in',
+                        $names,
+                    ],
+                ];
+            }
+
+            /*
+SELECT
+  `wp_term_taxonomy`.`term_taxonomy_id`,
+  wp_terms.name AS term_name
+FROM
+  `wp_term_taxonomy`
+  LEFT JOIN `wp_terms`
+    ON `wp_term_taxonomy`.`term_id` = `wp_terms`.`term_id`
+WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
+            */
+            $items = $termTaxonomyTable->tableIns()->field(implode(',', [
+                $termTaxonomyTable->getName() . '.' . $termTaxonomyTable->getTermTaxonomyIdField(),
+                $termTable->getName() . '.' . $termTable->getNameField() . ' as term_name',
+            ]))->where($termTaxonomyTable->getName() . '.' . $termTaxonomyTable->getTaxonomyField(), '=', $taxonomy)
+                ->where($whereNames)
+                ->join($termTable->getName(), $termTaxonomyTable->getName() . '.' . $termTaxonomyTable->getTermIdField() . ' = ' . $termTable->getName() . '.' . $termTable->getTermIdField(), 'left')
+                //->fetchSql()
+                ->select();
+
+            $result = [];
+
+            foreach ($items as $k => $v)
+            {
+                $result[$v[$termTaxonomyTable->getTermTaxonomyIdField()]] = $v['term_name'];
+            }
+
+            return $result;
+        }
+
+        protected function addPostTerm($postId, $termTaxonomyId, $order = 0): int|string
+        {
+            $termRelationshipsTable = $this->getTermRelationshipsTable();
+
+            return $termRelationshipsTable->tableIns()->insertGetId([
+                $termRelationshipsTable->getObjectIdField()       => $postId,
+                $termRelationshipsTable->getTermTaxonomyIdField() => $termTaxonomyId,
+                $termRelationshipsTable->getTermOrderField()      => $order,
+            ]);
         }
 
         /*
@@ -471,23 +595,47 @@
          *
          * */
 
-        public function addTerm($type, $taxonomy): int|string
+        //根据传入的tags，写入数据库，返回这些tags的id
+        public function addTags(array $tags): array
         {
-            $termTable         = $this->getTermsTable();
-            $termTaxonomyTable = $this->getTermTaxonomyTable();
+            $tagsArray = $this->getPostTag();
 
-            $typeId = $termTable->tableIns()->insertGetId([
-                $termTable->getNameField()      => $type,
-                $termTable->getSlugField()      => 'type-' . hrtime(true),
-                $termTable->getTermGroupField() => 0,
-            ]);
+            $tagsInDb = array_values($tagsArray);
 
-            return $termTaxonomyTable->tableIns()->insertGetId([
-                $termTaxonomyTable->getTermIdField()   => $typeId,
-                $termTaxonomyTable->getTaxonomyField() => $taxonomy,
-            ]);
+            $newTags = array_diff($tags, $tagsInDb);
+
+            foreach ($newTags as $k => $name)
+            {
+                $this->addPostTag($name);
+            }
+
+            return $this->getTagsIds($tags);
         }
 
+        //根据传入的tags，返回这些tags的id
+        public function getTagsIds(array $tags): array
+        {
+            $tagsArray = $this->getPostTag($tags);
+
+            $tagIds = array_keys($tagsArray);
+
+            return $tagIds;
+        }
+
+        /*
+         *
+         * ------------------------------------------------------
+         *
+         * */
+
+        /**
+         * @param string      $title
+         * @param string      $postContent
+         * @param string      $typeId 为 terms 表的 term_id
+         * @param string|null $guid
+         *
+         * @return int|string
+         */
         public function addPost(string $title, string $postContent, string $typeId, string $guid = null): int|string
         {
             if (is_null($guid))
@@ -495,8 +643,8 @@
                 $guid = hrtime(true);
             }
 
-            $termRelationshipsTable = $this->getTermRelationshipsTable();
-            $postsTable             = $this->getPostsTable();
+            $postsTable        = $this->getPostsTable();
+            $termTaxonomyTable = $this->getTermTaxonomyTable();
 
             // 获取当前本地时间
             $local_time = new \DateTime();
@@ -508,7 +656,7 @@
             $gmt_time->setTimezone(new \DateTimeZone('GMT'));            // 设置为 GMT 时区
             $formatted_post_date_gmt = $gmt_time->format('Y-m-d H:i:s'); // GMT 时间，符合 'Y-m-d H:i:s' 格式
 
-            $postId = $postsTable->tableIns()->insertGetId([
+            $postData = [
                 $postsTable->getPostAuthorField()          => 1,
                 $postsTable->getPostDateField()            => $formatted_post_date,
                 $postsTable->getPostDateGmtField()         => $formatted_post_date_gmt,
@@ -531,112 +679,334 @@
                 $postsTable->getPostTypeField()            => 'post',
                 $postsTable->getPostMimeTypeField()        => 0,
                 $postsTable->getCommentCountField()        => 0,
-            ]);
+            ];
+            $postId   = $postsTable->tableIns()->insertGetId($postData);
 
-            return $termRelationshipsTable->tableIns()->insertGetId([
-                $termRelationshipsTable->getObjectIdField()       => $postId,
-                $termRelationshipsTable->getTermTaxonomyIdField() => $typeId,
-            ]);
+            $termTaxonomyId = $termTaxonomyTable->tableIns()->where($termTaxonomyTable->getTermIdField(), '=', $typeId)
+                ->value($termTaxonomyTable->getTermTaxonomyIdField());
+
+            return $this->addPostTerm($postId, (int)$termTaxonomyId);
         }
 
-        public function searchPostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false)
+        public function updatePostContentByGuid(string $guid, string $title = null, string $postContent = null): int
         {
             $postsTable = $this->getPostsTable();
 
-            $ins = $postsTable->tableIns();
+            $data = [];
 
-            $whereTitle   = [];
-            $whereContent = [];
-
-            if ($isFullMatch)
+            if (!is_null($title))
             {
-                $whereTitle   = [
-                    $postsTable->getPostTitleField(),
-                    '=',
-                    $keyword,
-                ];
-                $whereContent = [
-                    $postsTable->getPostContentField(),
-                    '=',
-                    $keyword,
-                ];
+                $data[$postsTable->getPostTitleField()] = $title;
             }
-            else
+            if (!is_null($postContent))
             {
-                $whereTitle   = [
-                    $postsTable->getPostTitleField(),
-                    'like',
-                    "%{$keyword}%",
-                ];
-                $whereContent = [
-                    $postsTable->getPostContentField(),
-                    'like',
-                    "%{$keyword}%",
-                ];
+                $data[$postsTable->getPostContentField()] = $postContent;
             }
 
-            $ins->where(...$whereTitle);
-
-            if ($includeContent)
-            {
-                $ins->whereOr(...$whereContent);
-            }
-
-            return $ins->select();
-        }
-
-        public function deletePostByGuid(string|int|array $guid): void
-        {
-            if (is_int($guid) || is_string($guid))
-            {
-                $guids = [$guid];
-            }
-            else
-            {
-                $guids = $guid;
-            }
-
-            $postsTable = $this->getPostsTable();
-            $where      = [
+            return $postsTable->tableIns()->where([
                 [
                     $postsTable->getGuidField(),
-                    'in',
-                    $guids,
+                    '=',
+                    $guid,
                 ],
-            ];
-
-            $postIds = $postsTable->tableIns()->where($where)->column($postsTable->getPkField());
-
-            $this->deletePostById($postIds);
+            ])->update($data);
         }
 
-        public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false): int
+        public function updatePostContentById($id, string $title = null, string $postContent = null): int
         {
             $postsTable = $this->getPostsTable();
-            $posts      = $this->searchPostByKeyword($keyword, $includeContent, $isFullMatch);
 
-            $ids = [];
-            if (count($posts))
+            $data = [];
+
+            if (!is_null($title))
             {
-                foreach ($posts as $k => $post)
+                $data[$postsTable->getPostTitleField()] = $title;
+            }
+            if (!is_null($postContent))
+            {
+                $data[$postsTable->getPostContentField()] = $postContent;
+            }
+
+            return $postsTable->tableIns()->where([
+                [
+                    $postsTable->getPkField(),
+                    '=',
+                    $id,
+                ],
+            ])->update($data);
+        }
+
+        /**
+         * 付费购买隐藏模块，文章内容中必须有隐藏模块 使用 hideContent 方法生产
+         *
+         * @param int|string $post_id
+         * @param float      $zibpay_price
+         * @param string     $pay_title
+         * @param string     $pay_doc
+         * @param string     $pay_details
+         * @param int        $pay_limit 0->所有人可买,1->黄金会员及以上会员可购买, 2->仅钻石会员可购买
+         * @param int        $pay_cuont
+         *
+         * @return void
+         */
+        public function makePostPayRead(int|string $post_id, float $zibpay_price, string $pay_title = '', string $pay_doc = '', string $pay_details = '', int $pay_limit = 0, int $pay_cuont = 0): void
+        {
+            $zibpay_type = 1;
+            $pay_modo    = 0;
+
+            $posts_zibpay = [
+                'pay_type'            => $zibpay_type,
+                'pay_limit'           => $pay_limit,
+                'pay_modo'            => $pay_modo,
+                'pay_price'           => $zibpay_price,
+                'vip_1_price'         => ceil($zibpay_price * 0.8),
+                'vip_2_price'         => ceil($zibpay_price * 0.6),
+                'pay_original_price'  => ceil($zibpay_price * 1.6),
+                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'points_price'        => '',
+                'vip_1_points'        => '',
+                'vip_2_points'        => '',
+                'pay_rebate_discount' => '',
+                'pay_cuont'           => $pay_cuont,
+                'pay_extra_hide'      => '',
+                'pay_title'           => $pay_title,
+                'pay_doc'             => $pay_doc,
+                'pay_details'         => $pay_details,
+
+                'pay_gallery'      => '',
+                'pay_gallery_show' => '',
+
+                'video_url'          => '',
+                'video_pic'          => '',
+                'video_title'        => '',
+                'video_episode'      => [],
+                'video_scale_height' => '0',
+
+                'pay_download' => [],
+                'attributes'   => [],
+                'demo_link'    => [],
+            ];
+
+            $this->setPostPayInfo($post_id, $zibpay_type, $pay_modo, $zibpay_price, 0, $posts_zibpay);
+        }
+
+        /**
+         * @param int|string $post_id
+         * @param float      $zibpay_price
+         * @param array      $pay_download
+         * @param string     $pay_title
+         * @param string     $pay_doc
+         * @param string     $pay_details
+         * @param int        $pay_limit
+         * @param int        $pay_cuont
+         *
+         * @return void
+         */
+        public function makePostPayDownload(int|string $post_id, float $zibpay_price, array $pay_download, string $pay_title = '', string $pay_doc = '', string $pay_details = '', int $pay_limit = 0, int $pay_cuont = 0): void
+        {
+            $zibpay_type = 2;
+            $pay_modo    = 0;
+
+            $pay_download_data = [];
+            foreach ($pay_download as $k => $v)
+            {
+                $pay_download_data[] = array_merge([
+                    'more' => '',
+                    'name' => '',
+                    'icon' => 'fa fa-download',
+                ], $v);
+            }
+
+            $posts_zibpay = [
+                'pay_type'            => $zibpay_type,
+                'pay_limit'           => $pay_limit,
+                'pay_modo'            => $pay_modo,
+                'pay_price'           => $zibpay_price,
+                'vip_1_price'         => ceil($zibpay_price * 0.8),
+                'vip_2_price'         => ceil($zibpay_price * 0.6),
+                'pay_original_price'  => ceil($zibpay_price * 1.6),
+                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'points_price'        => '',
+                'vip_1_points'        => '',
+                'vip_2_points'        => '',
+                'pay_rebate_discount' => '',
+                'pay_cuont'           => $pay_cuont,
+                'pay_extra_hide'      => '',
+                'pay_title'           => $pay_title,
+                'pay_doc'             => $pay_doc,
+                'pay_details'         => $pay_details,
+
+                'pay_gallery'      => '',
+                'pay_gallery_show' => '',
+
+                'video_url'          => '',
+                'video_pic'          => '',
+                'video_title'        => '',
+                'video_episode'      => [],
+                'video_scale_height' => '0',
+
+                'pay_download' => $pay_download_data,
+                'attributes'   => [],
+                'demo_link'    => [],
+            ];
+
+            $this->setPostPayInfo($post_id, $zibpay_type, $pay_modo, $zibpay_price, 0, $posts_zibpay);
+        }
+
+        /**
+         * @param int|string $post_id
+         * @param float      $zibpay_price
+         * @param array      $pay_gallery
+         * @param int        $pay_gallery_show
+         * @param string     $pay_title
+         * @param string     $pay_doc
+         * @param string     $pay_details
+         * @param int        $pay_limit
+         * @param int        $pay_cuont
+         *
+         * @return void
+         */
+        public function makePostPayImage(int|string $post_id, float $zibpay_price, array $pay_gallery, int $pay_gallery_show = 0, string $pay_title = '', string $pay_doc = '', string $pay_details = '', int $pay_limit = 0, int $pay_cuont = 0): void
+        {
+            $zibpay_type = 5;
+            $pay_modo    = 0;
+
+            $posts_zibpay = [
+                'pay_type'            => $zibpay_type,
+                'pay_limit'           => $pay_limit,
+                'pay_modo'            => $pay_modo,
+                'pay_price'           => $zibpay_price,
+                'vip_1_price'         => ceil($zibpay_price * 0.8),
+                'vip_2_price'         => ceil($zibpay_price * 0.6),
+                'pay_original_price'  => ceil($zibpay_price * 1.6),
+                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'points_price'        => '',
+                'vip_1_points'        => '',
+                'vip_2_points'        => '',
+                'pay_rebate_discount' => '',
+                'pay_cuont'           => $pay_cuont,
+                'pay_extra_hide'      => '',
+                'pay_title'           => $pay_title,
+                'pay_doc'             => $pay_doc,
+                'pay_details'         => $pay_details,
+
+                'pay_gallery'      => implode(',', $pay_gallery),
+                'pay_gallery_show' => (string)$pay_gallery_show,
+
+                'video_url'          => '',
+                'video_pic'          => '',
+                'video_title'        => '',
+                'video_episode'      => [],
+                'video_scale_height' => '0',
+
+                'pay_download' => [],
+                'attributes'   => [],
+                'demo_link'    => [],
+            ];
+
+            $this->setPostPayInfo($post_id, $zibpay_type, $pay_modo, $zibpay_price, 0, $posts_zibpay);
+        }
+
+        /**
+         * @param int|string $post_id
+         * @param float      $zibpay_price
+         * @param array      $videos
+         * @param string     $pay_title
+         * @param string     $pay_doc
+         * @param string     $pay_details
+         * @param int        $pay_limit
+         * @param int        $pay_cuont
+         *
+         * @return void
+         */
+        public function makePostPayVideo(int|string $post_id, float $zibpay_price, array $videos, string $pay_title = '', string $pay_doc = '', string $pay_details = '', int $pay_limit = 0, int $pay_cuont = 0): void
+        {
+            $zibpay_type = 6;
+            $pay_modo    = 0;
+
+            $firstVideo = array_shift($videos);
+
+            $video_url   = $firstVideo['url'];
+            $video_pic   = $firstVideo['pic'];
+            $video_title = $firstVideo['title'];
+
+            $video_episode = [];
+            if (count($videos))
+            {
+                foreach ($videos as $k => $videoInfo)
                 {
-                    $ids[] = $post[$postsTable->getPkField()];
+                    $video_episode[] = array_merge([
+                        'title' => $videoInfo['title'] ?? '视频[' . ($k + 2) . ']',
+                    ], $videoInfo);
                 }
             }
 
-            return $this->deletePostById($ids);
+            $posts_zibpay = [
+                'pay_type'            => $zibpay_type,
+                'pay_limit'           => $pay_limit,
+                'pay_modo'            => $pay_modo,
+                'pay_price'           => $zibpay_price,
+                'vip_1_price'         => ceil($zibpay_price * 0.8),
+                'vip_2_price'         => ceil($zibpay_price * 0.6),
+                'pay_original_price'  => ceil($zibpay_price * 1.6),
+                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'points_price'        => '',
+                'vip_1_points'        => '',
+                'vip_2_points'        => '',
+                'pay_rebate_discount' => '',
+                'pay_cuont'           => $pay_cuont,
+                'pay_extra_hide'      => '',
+                'pay_title'           => $pay_title,
+                'pay_doc'             => $pay_doc,
+                'pay_details'         => $pay_details,
+
+                'pay_gallery'      => '',
+                'pay_gallery_show' => '',
+
+                'video_url'          => $video_url,
+                'video_pic'          => $video_pic,
+                'video_title'        => $video_title,
+                'video_episode'      => $video_episode,
+                'video_scale_height' => '50',
+
+                'pay_download' => [],
+                'attributes'   => [],
+                'demo_link'    => [],
+            ];
+
+            $this->setPostPayInfo($post_id, $zibpay_type, $pay_modo, $zibpay_price, 0, $posts_zibpay);
         }
 
-        public function deleteAllPost(): int
+        /**
+         * 关闭收费
+         *
+         * @param int|string $post_id
+         *
+         * @return void
+         * @throws \think\db\exception\DbException
+         */
+        public function makePostPayOff(int|string $post_id): void
         {
-            $postsTable = $this->getPostsTable();
+            $postmetaTable = $this->getPostmetaTable();
 
-            $ids = $postsTable->tableIns()
-                ->where($postsTable->getPostTypeField(), '=', 'post')
-                ->whereOr($postsTable->getPostTypeField(), '=', 'revision')
-                ->column($postsTable->getPkField());
+            $postWhere = [
+                $postmetaTable->getPostIdField(),
+                '=',
+                $post_id,
+            ];
 
-            return $this->deletePostById($ids);
+            $keys = [
+                "zibpay_type",
+                "zibpay_modo",
+                "zibpay_price",
+                "zibpay_points_price",
+                "posts_zibpay",
+            ];
+
+            foreach ($keys as $k => $v)
+            {
+                $postmetaTable->tableIns()->where(...$postWhere)->where($postmetaTable->getMetaKeyField(), '=', $v)->delete();
+            }
         }
 
         public function deletePostById(int|array $id): int
@@ -688,69 +1058,303 @@
             ])->delete();
         }
 
-
-        public function updatePostByGuid(string $guid, string $title = null, string $postContent = null): int
+        public function deletePostByGuid(string|int|array $guid): void
         {
+            if (is_int($guid) || is_string($guid))
+            {
+                $guids = [$guid];
+            }
+            else
+            {
+                $guids = $guid;
+            }
+
             $postsTable = $this->getPostsTable();
-
-            $data = [];
-
-            if (!is_null($title))
-            {
-                $data[$postsTable->getPostTitleField()] = $title;
-            }
-            if (!is_null($postContent))
-            {
-                $data[$postsTable->getPostContentField()] = $postContent;
-            }
-
-            return $postsTable->tableIns()->where([
+            $where      = [
                 [
                     $postsTable->getGuidField(),
-                    '=',
-                    $guid,
+                    'in',
+                    $guids,
                 ],
-            ])->update($data);
+            ];
+
+            $postIds = $postsTable->tableIns()->where($where)->column($postsTable->getPkField());
+
+            $this->deletePostById($postIds);
         }
 
-        public function updatePostById($id, string $title = null, string $postContent = null): int
+        public function deletePostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false): int
+        {
+            $postsTable = $this->getPostsTable();
+            $posts      = $this->searchPostByKeyword($keyword, $includeContent, $isFullMatch);
+
+            $ids = [];
+            if (count($posts))
+            {
+                foreach ($posts as $k => $post)
+                {
+                    $ids[] = $post[$postsTable->getPkField()];
+                }
+            }
+
+            return $this->deletePostById($ids);
+        }
+
+        public function deleteAllPost(): int
         {
             $postsTable = $this->getPostsTable();
 
-            $data = [];
+            $ids = $postsTable->tableIns()->where($postsTable->getPostTypeField(), '=', 'post')
+                ->whereOr($postsTable->getPostTypeField(), '=', 'revision')->column($postsTable->getPkField());
 
-            if (!is_null($title))
-            {
-                $data[$postsTable->getPostTitleField()] = $title;
-            }
-            if (!is_null($postContent))
-            {
-                $data[$postsTable->getPostContentField()] = $postContent;
-            }
-
-            return $postsTable->tableIns()->where([
-                [
-                    $postsTable->getPkField(),
-                    '=',
-                    $id,
-                ],
-            ])->update($data);
+            return $this->deletePostById($ids);
         }
 
-
-        public function deleteTransient(): int|string
+        public function searchPostByKeyword(string $keyword, $includeContent = false, bool $isFullMatch = false)
         {
-            $optionTable = $this->getOptionsTable();
+            $postsTable = $this->getPostsTable();
 
-            return $optionTable->tableIns()->where([
-                [
-                    $optionTable->getOptionNameField(),
+            $ins = $postsTable->tableIns();
+
+            $whereTitle   = [];
+            $whereContent = [];
+
+            if ($isFullMatch)
+            {
+                $whereTitle   = [
+                    $postsTable->getPostTitleField(),
+                    '=',
+                    $keyword,
+                ];
+                $whereContent = [
+                    $postsTable->getPostContentField(),
+                    '=',
+                    $keyword,
+                ];
+            }
+            else
+            {
+                $whereTitle   = [
+                    $postsTable->getPostTitleField(),
                     'like',
-                    '%_transient_%',
+                    "%{$keyword}%",
+                ];
+                $whereContent = [
+                    $postsTable->getPostContentField(),
+                    'like',
+                    "%{$keyword}%",
+                ];
+            }
+
+            $ins->where(...$whereTitle);
+
+            if ($includeContent)
+            {
+                $ins->whereOr(...$whereContent);
+            }
+
+            return $ins->select();
+        }
+
+        public function setPostThumbnail($post_id, $thumbnail_post_id): void
+        {
+            $this->updatePostmeta($post_id, '_thumbnail_id', $thumbnail_post_id);
+        }
+
+        public function updatePostmeta($post_id, $key, $value): void
+        {
+            $postmetaTable = $this->getPostmetaTable();
+
+            $postmetaTable->tableIns()->where([
+                [
+                    $postmetaTable->getPostIdField(),
+                    '=',
+                    $post_id,
+                ],
+                [
+                    $postmetaTable->getMetaKeyField(),
+                    '=',
+                    $key,
                 ],
             ])->delete();
+
+            $postmetaTable->tableIns()->insert([
+                "post_id"    => $post_id,
+                "meta_key"   => $key,
+                "meta_value" => $value,
+            ]);
         }
 
+        protected function setPostPayInfo(int|string $post_id, string $zibpay_type, string $zibpay_modo, string $zibpay_price, string $zibpay_points_price, array $posts_zibpay): void
+        {
+            $postmetaTable = $this->getPostmetaTable();
+
+            $info = [
+                "zibpay_type"         => $zibpay_type,
+                "zibpay_modo"         => $zibpay_modo,
+                "zibpay_price"        => $zibpay_price,
+                "zibpay_points_price" => $zibpay_points_price,
+                "posts_zibpay"        => serialize($posts_zibpay),
+            ];
+            $data = [];
+
+            foreach ($info as $k => $v)
+            {
+                $data[] = [
+                    "post_id"    => $post_id,
+                    "meta_key"   => $k,
+                    "meta_value" => $v,
+                ];
+            }
+
+            $this->makePostPayOff($post_id);
+
+            $postmetaTable->tableIns()->insertAll($data);
+        }
+
+        /*
+         *
+         * ------------------------------------------------------
+         *
+         * */
+        public function addMedia(string $file, string $targetDir, string $domain = 'http://wp-media'): int|string
+        {
+            if (!is_file($file))
+            {
+                return false;
+            }
+
+            $fileInfo = pathinfo($file);
+
+            $fileName = hrtime(true) . '.' . $fileInfo['extension'];
+
+            // 2025/04/09/864335431541458.jpg
+            $saveName = date('Y/m/d') . DIRECTORY_SEPARATOR . $fileName;
+
+            // http://dev6080/wp-content/uploads/2025/04/09/864335431541458.jpg
+            $guid = trim($domain, '\/') . '/wp-content/uploads/' . $saveName;
+            // ../data1/2025/04/09/864335431541458.jpg
+            $savePath = rtrim($targetDir, '\/') . DIRECTORY_SEPARATOR . $saveName;
+
+            is_dir(dirname($savePath)) or mkdir(dirname($savePath), 0755, true);
+            if (!copy($file, $savePath))
+            {
+                return false;
+            }
+
+            $postsTable    = $this->getPostsTable();
+            $postmetaTable = $this->getPostmetaTable();
+
+            // 获取当前本地时间
+            $local_time = new \DateTime();
+            $local_time->setTimezone(new \DateTimeZone('Asia/Shanghai')); // 设置为本地时区（例如上海时区）
+            $formatted_post_date = $local_time->format('Y-m-d H:i:s');    // 本地时间，符合 'Y-m-d H:i:s' 格式
+
+            // 获取当前的 GMT 时间
+            $gmt_time = new \DateTime();
+            $gmt_time->setTimezone(new \DateTimeZone('GMT'));            // 设置为 GMT 时区
+            $formatted_post_date_gmt = $gmt_time->format('Y-m-d H:i:s'); // GMT 时间，符合 'Y-m-d H:i:s' 格式
+
+            $mime     = static::getMimeByExt($fileInfo['extension']);
+            $filesize = filesize($file);
+
+            $postData = [
+                $postsTable->getPostAuthorField()          => 1,
+                $postsTable->getPostDateField()            => $formatted_post_date,
+                $postsTable->getPostDateGmtField()         => $formatted_post_date_gmt,
+                $postsTable->getPostContentField()         => '',
+                $postsTable->getPostTitleField()           => $fileInfo['filename'],
+                $postsTable->getPostExcerptField()         => '',
+                $postsTable->getPostStatusField()          => 'inherit',
+                $postsTable->getCommentStatusField()       => 'open',
+                $postsTable->getPingStatusField()          => 'closed',
+                $postsTable->getPostPasswordField()        => '',
+                $postsTable->getPostNameField()            => urlencode($fileInfo['filename']),
+                $postsTable->getToPingField()              => '',
+                $postsTable->getPingedField()              => '',
+                $postsTable->getPostModifiedField()        => $formatted_post_date,
+                $postsTable->getPostModifiedGmtField()     => $formatted_post_date_gmt,
+                $postsTable->getPostContentFilteredField() => '',
+                $postsTable->getPostParentField()          => 0,
+                $postsTable->getGuidField()                => $guid,
+                $postsTable->getMenuOrderField()           => 0,
+                $postsTable->getPostTypeField()            => 'attachment',
+                $postsTable->getPostMimeTypeField()        => $mime,
+                $postsTable->getCommentCountField()        => 0,
+            ];
+            $postId   = $postsTable->tableIns()->insertGetId($postData);
+
+            if (str_starts_with($mime, 'image'))
+            {
+                $imageInfo = getimagesize($file);
+
+                $meta = [
+                    "width"      => $imageInfo[0],
+                    "height"     => $imageInfo[1],
+                    "file"       => $saveName,
+                    "filesize"   => $filesize,
+                    "sizes"      => [
+                        "medium"    => [
+                            "file"      => $fileName,
+                            "width"     => $imageInfo[0],
+                            "height"    => $imageInfo[1],
+                            "mime-type" => $mime,
+                            "filesize"  => $filesize,
+                        ],
+                        "thumbnail" => [
+                            "file"      => $fileName,
+                            "width"     => $imageInfo[0],
+                            "height"    => $imageInfo[1],
+                            "mime-type" => $mime,
+                            "filesize"  => $filesize,
+                        ],
+                    ],
+                    "image_meta" => [
+                        "aperture"          => "0",
+                        "credit"            => "",
+                        "camera"            => "",
+                        "caption"           => "",
+                        "created_timestamp" => "0",
+                        "copyright"         => "",
+                        "focal_length"      => "0",
+                        "iso"               => "0",
+                        "shutter_speed"     => "0",
+                        "title"             => "",
+                        "orientation"       => "0",
+                        "keywords"          => [],
+                    ],
+                ];
+            }
+            else
+            {
+                $meta = [
+                    "filesize" => $filesize,
+                ];
+            }
+
+            $postMeta = [
+                [
+                    $postmetaTable->getPostIdField()    => $postId,
+                    $postmetaTable->getMetaKeyField()   => '_wp_attached_file',
+                    $postmetaTable->getMetaValueField() => $saveName,
+                ],
+                [
+                    $postmetaTable->getPostIdField()    => $postId,
+                    $postmetaTable->getMetaKeyField()   => '_wp_attachment_metadata',
+                    $postmetaTable->getMetaValueField() => serialize($meta),
+                ],
+            ];
+
+            $postmetaTable->tableIns()->insertAll($postMeta);
+
+            return $postId;
+        }
+
+        /*
+         *
+         * ------------------------------------------------------
+         *
+         * */
         public function updateOptionByName($name, $value): int|string
         {
             $optionTable = $this->getOptionsTable();
@@ -783,6 +1387,25 @@
             $optionTable = $this->getOptionsTable();
 
             return $optionTable->tableIns()->select();
+        }
+
+        /*
+         *
+         * ------------------------------------------------------
+         *
+         * */
+
+        public function deleteTransient(): int|string
+        {
+            $optionTable = $this->getOptionsTable();
+
+            return $optionTable->tableIns()->where([
+                [
+                    $optionTable->getOptionNameField(),
+                    'like',
+                    '%_transient_%',
+                ],
+            ])->delete();
         }
 
         public function replaceAll(array $replacement): void
@@ -974,52 +1597,16 @@
             }
         }
 
-        protected function initRedis(): static
-        {
-            $this->container->set('redisClient', function(Container $container) {
-
-                /**
-                 * @var \Redis $redis
-                 */
-                $redis = (new \Redis());
-                $redis->connect($this->redisHost, $this->redisPort);
-                $this->redisPassword && $redis->auth($this->redisPassword);
-                $redis->select($this->redisDb);
-
-                return $redis;
-            });
-
-            return $this;
-        }
-
-        public function getRedisClient(): \Redis
-        {
-            return $this->container->get('redisClient');
-        }
-
-        public function deleteRedisLog(): void
-        {
-            $redis = $this->getRedisClient();
-
-            $pattern = $this->logNamespace . '*';
-
-            $keysToDelete = $redis->keys($pattern);
-
-            foreach ($keysToDelete as $key)
-            {
-                $redis->del($key);
-            }
-        }
-
         public function updateAllPostView($viewsMin, $viewsMax): void
         {
             //----------------------------------------------------------------
+            $postsTable    = $this->getPostsTable();
+            $postmetaTable = $this->getPostmetaTable();
 
             //所有文章的id
-            $postsTable = $this->getPostsTable();
-            $postIds    = $postsTable->tableIns()->where([
+            $postIds = $postsTable->tableIns()->where([
                 [
-                    $wpPostTab->getGuidField(),
+                    $postsTable->getGuidField(),
                     'regexp',
                     '^[0-9]{18,20}$',
                 ],
@@ -1028,8 +1615,7 @@
             //----------------------------------------------------------------
 
             //构造每个文章的views
-            $viewsArray    = [];
-            $postmetaTable = $this->getPostmetaTable();
+            $viewsArray = [];
 
             foreach ($postIds as $id)
             {
@@ -1101,6 +1687,44 @@
             }
         }
 
+        /*
+         *
+         * ------------------------------------------------------
+         *
+         * */
+
+        public function deleteRedisLog(): void
+        {
+            $redis = $this->getRedisClient();
+
+            $pattern = $this->logNamespace . '*';
+
+            $keysToDelete = $redis->keys($pattern);
+
+            foreach ($keysToDelete as $key)
+            {
+                $redis->del($key);
+            }
+        }
+
+        private function initRedis(): static
+        {
+            $this->container->set('redisClient', function(Container $container) {
+
+                /**
+                 * @var \Redis $redis
+                 */
+                $redis = (new \Redis());
+                $redis->connect($this->redisHost, $this->redisPort);
+                $this->redisPassword && $redis->auth($this->redisPassword);
+                $redis->select($this->redisDb);
+
+                return $redis;
+            });
+
+            return $this;
+        }
+
         private static function updateArticleCreateTime($begin, $end, $times, $totalArticles)
         {
             // 将开始时间和结束时间转为时间戳
@@ -1143,4 +1767,86 @@
             return $updateTimes;
         }
 
+        private static function getMimeByExt($ext): string
+        {
+            $map = [
+                'pdf'   => 'application/pdf',
+                'doc'   => 'application/msword',
+                'docx'  => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls'   => 'application/vnd.ms-excel',
+                'xlsx'  => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'ppt'   => 'application/vnd.ms-powerpoint',
+                'pptx'  => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'rtf'   => 'application/rtf',
+                'txt'   => 'text/plain',
+                'csv'   => 'text/csv',
+                'xml'   => 'application/xml',
+                'json'  => 'application/json',
+                'odt'   => 'application/vnd.oasis.opendocument.text',
+                'ods'   => 'application/vnd.oasis.opendocument.spreadsheet',
+                'odp'   => 'application/vnd.oasis.opendocument.presentation',
+                'zip'   => 'application/zip',
+                'gz'    => 'application/gzip',
+                'tar'   => 'application/x-tar',
+                'bz2'   => 'application/x-bzip2',
+                'rar'   => 'application/vnd.rar',
+                '7z'    => 'application/x-7z-compressed',
+                'mp4'   => 'video/mp4',
+                'avi'   => 'video/x-msvideo',
+                'flv'   => 'video/x-flv',
+                'ogv'   => 'video/ogg',
+                'webm'  => 'video/webm',
+                'mpg'   => 'video/mpeg',
+                'mov'   => 'video/quicktime',
+                'wmv'   => 'video/x-ms-wmv',
+                'mkv'   => 'video/x-matroska',
+                'rmvb'  => 'application/vnd.rn-realmedia-vbr',
+                '3gp'   => 'video/3gpp',
+                '3g2'   => 'video/3gpp2',
+                'asf'   => 'video/x-ms-asf',
+                'jpg'   => 'image/jpeg',
+                'png'   => 'image/png',
+                'gif'   => 'image/gif',
+                'svg'   => 'image/svg+xml',
+                'webp'  => 'image/webp',
+                'bmp'   => 'image/bmp',
+                'tiff'  => 'image/tiff',
+                'heif'  => 'image/heif',
+                'heic'  => 'image/heic',
+                'jfif'  => 'image/jpeg',
+                'psd'   => 'image/vnd.adobe.photoshop',
+                'ico'   => 'image/x-icon',
+                'ras'   => 'image/x-cmu-raster',
+                'ppm'   => 'image/x-portable-pixmap',
+                'mp3'   => 'audio/mpeg',
+                'wav'   => 'audio/wav',
+                'ogg'   => 'audio/ogg',
+                'mid'   => 'audio/midi',
+                'aac'   => 'audio/aac',
+                'wma'   => 'audio/x-ms-wma',
+                'flac'  => 'audio/flac',
+                'ra'    => 'audio/vnd.rn-realaudio',
+                'opus'  => 'audio/opus',
+                'aiff'  => 'audio/aiff',
+                'm4a'   => 'audio/mp4',
+                'html'  => 'text/html',
+                'css'   => 'text/css',
+                'js'    => 'application/javascript',
+                'md'    => 'text/markdown',
+                'sh'    => 'application/x-sh',
+                'bin'   => 'application/octet-stream',
+                'swf'   => 'application/x-shockwave-flash',
+                'apk'   => 'application/vnd.android.package-archive',
+                'epub'  => 'application/epub+zip',
+                'ttf'   => 'font/ttf',
+                'otf'   => 'font/otf',
+                'woff'  => 'font/woff',
+                'woff2' => 'font/woff2',
+                'cab'   => 'application/vnd.ms-cab-compressed',
+                'qtl'   => 'application/x-qtiplot',
+                'exe'   => 'application/x-msdownload',
+            ];
+
+            return $map[$ext] ?? 'unknow';
+        }
     }

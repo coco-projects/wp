@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "coco-project/html-builder",
-            "version": "v1.0.40",
+            "version": "v1.0.41",
             "source": {
                 "type": "git",
                 "url": "https://github.com/coco-projects/html-builder.git",
-                "reference": "5d7c56a5b69b2cdf42c959665196c8d2e0635285"
+                "reference": "6475292d31a0a26f6dd2e14fd3fc2441e379e7e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/coco-projects/html-builder/zipball/5d7c56a5b69b2cdf42c959665196c8d2e0635285",
-                "reference": "5d7c56a5b69b2cdf42c959665196c8d2e0635285",
+                "url": "https://api.github.com/repos/coco-projects/html-builder/zipball/6475292d31a0a26f6dd2e14fd3fc2441e379e7e5",
+                "reference": "6475292d31a0a26f6dd2e14fd3fc2441e379e7e5",
                 "shasum": ""
             },
             "require": {
@@ -46,9 +46,9 @@
             "description": "Document Object Model (DOM) document generator, each attribute of each DOM node contains corresponding API operations.",
             "support": {
                 "issues": "https://github.com/coco-projects/html-builder/issues",
-                "source": "https://github.com/coco-projects/html-builder/tree/v1.0.40"
+                "source": "https://github.com/coco-projects/html-builder/tree/v1.0.41"
             },
-            "time": "2024-09-19T07:45:54+00:00"
+            "time": "2025-04-11T02:48:09+00:00"
         },
         {
             "name": "coco-project/logger",
@@ -257,16 +257,16 @@
         },
         {
             "name": "laravel/serializable-closure",
-            "version": "v2.0.3",
+            "version": "v2.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/serializable-closure.git",
-                "reference": "f379c13663245f7aa4512a7869f62eb14095f23f"
+                "reference": "b352cf0534aa1ae6b4d825d1e762e35d43f8a841"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/f379c13663245f7aa4512a7869f62eb14095f23f",
-                "reference": "f379c13663245f7aa4512a7869f62eb14095f23f",
+                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/b352cf0534aa1ae6b4d825d1e762e35d43f8a841",
+                "reference": "b352cf0534aa1ae6b4d825d1e762e35d43f8a841",
                 "shasum": ""
             },
             "require": {
@@ -314,7 +314,7 @@
                 "issues": "https://github.com/laravel/serializable-closure/issues",
                 "source": "https://github.com/laravel/serializable-closure"
             },
-            "time": "2025-02-11T15:03:05+00:00"
+            "time": "2025-03-19T13:51:03+00:00"
         },
         {
             "name": "matthiasmullie/minify",
@@ -1011,16 +1011,16 @@
         },
         {
             "name": "topthink/think-helper",
-            "version": "v3.1.10",
+            "version": "v3.1.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/top-think/think-helper.git",
-                "reference": "ac66cc0859a12cd5d73258f50f338aadc95e9b46"
+                "reference": "1d6ada9b9f3130046bf6922fe1bd159c8d88a33c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/top-think/think-helper/zipball/ac66cc0859a12cd5d73258f50f338aadc95e9b46",
-                "reference": "ac66cc0859a12cd5d73258f50f338aadc95e9b46",
+                "url": "https://api.github.com/repos/top-think/think-helper/zipball/1d6ada9b9f3130046bf6922fe1bd159c8d88a33c",
+                "reference": "1d6ada9b9f3130046bf6922fe1bd159c8d88a33c",
                 "shasum": ""
             },
             "require": {
@@ -1051,9 +1051,9 @@
             "description": "The ThinkPHP6 Helper Package",
             "support": {
                 "issues": "https://github.com/top-think/think-helper/issues",
-                "source": "https://github.com/top-think/think-helper/tree/v3.1.10"
+                "source": "https://github.com/top-think/think-helper/tree/v3.1.11"
             },
-            "time": "2024-11-21T01:47:51+00:00"
+            "time": "2025-04-07T06:55:59+00:00"
         },
         {
             "name": "topthink/think-orm",
@@ -2954,16 +2954,16 @@
         },
         {
             "name": "squizlabs/php_codesniffer",
-            "version": "3.12.0",
+            "version": "3.12.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHP_CodeSniffer.git",
-                "reference": "2d1b63db139c3c6ea0c927698e5160f8b3b8d630"
+                "reference": "ea16a1f3719783345febd3aab41beb55c8c84bfd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/2d1b63db139c3c6ea0c927698e5160f8b3b8d630",
-                "reference": "2d1b63db139c3c6ea0c927698e5160f8b3b8d630",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/ea16a1f3719783345febd3aab41beb55c8c84bfd",
+                "reference": "ea16a1f3719783345febd3aab41beb55c8c84bfd",
                 "shasum": ""
             },
             "require": {
@@ -3034,7 +3034,7 @@
                     "type": "thanks_dev"
                 }
             ],
-            "time": "2025-03-18T05:04:51+00:00"
+            "time": "2025-04-04T12:57:55+00:00"
         },
         {
             "name": "theseer/tokenizer",

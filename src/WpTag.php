@@ -7,8 +7,85 @@
 
     class WpTag
     {
+        public static function h1(mixed $content): string
+        {
+            return ArticleContent::heading([Tag::h1($content)], ["level" => 1]);
+        }
 
-        public static function buttons(mixed $buttons): string
+        public static function h2(mixed $content): string
+        {
+            return ArticleContent::heading([Tag::h2($content)], ["level" => 2]);
+        }
+
+        public static function h3(mixed $content): string
+        {
+            return ArticleContent::heading([Tag::h3($content)], ["level" => 3]);
+        }
+
+        public static function h4(mixed $content): string
+        {
+            return ArticleContent::heading([Tag::h4($content)], ["level" => 4]);
+        }
+
+        public static function h5(mixed $content): string
+        {
+            return ArticleContent::heading([Tag::h5($content)], ["level" => 5]);
+        }
+
+        public static function h6(mixed $content): string
+        {
+            return ArticleContent::heading([Tag::h5($content)], ["level" => 6]);
+        }
+
+        public static function quote(array $texts): string
+        {
+            $paragraphs = [];
+            foreach ($texts as $text)
+            {
+                $paragraphs[] = ArticleContent::paragraph(Tag::p($text));
+            }
+
+            return ArticleContent::quote(Tag::blockquote($paragraphs, [
+                'wp-block-quote',
+            ]));
+        }
+
+        public static function gallery(array $images): string
+        {
+            $imagesElements = [];
+
+            foreach ($images as $k => $v)
+            {
+                $figcaption = '';
+
+                if (isset($v['caption']) && $v['caption'])
+                {
+                    $figcaption = Tag::figcaption($v['caption'], ['wp-element-caption']);
+                }
+
+                $imagesElements[] = ArticleContent::image([
+                    Tag::figure([
+                        Tag::img($v['src']),
+                        $figcaption,
+                    ], [
+                        'wp-block-image',
+                        'size-large',
+                    ]),
+                ], [
+                    'sizeSlug'        => 'large',
+                    'linkDestination' => 'none',
+                ]);
+            }
+
+            return ArticleContent::gallery(Tag::figure($imagesElements, [
+                'wp-block-gallery',
+                'has-nested-images',
+                'columns-default',
+                'is-cropped',
+            ]), ['linkTo' => 'none']);
+        }
+
+        public static function buttons(array $buttons): string
         {
             $buttonsElements = [];
 
@@ -36,6 +113,18 @@
             ]);
         }
 
+        public static function image(string $src): string
+        {
+            return ArticleContent::image([
+                Tag::figure([
+                    Tag::img($src),
+                ], [
+                    'wp-block-image',
+                    'aligncenter',
+                    'size-large',
+                ]),
+            ]);
+        }
 
         public static function imageWithLink(string $src, string $link, string $figcaption = ''): string
         {
@@ -57,51 +146,22 @@
 
         public static function aBlock(string $link, string $text = '', string $target = "_blank"): string
         {
-            return ArticleContent::paragraph([
-                Tag::p(Tag::a($link, $text, $target)),
-            ]);
+            return ArticleContent::paragraph([Tag::p(Tag::a($link, $text, $target))]);
         }
 
         public static function p(mixed $content): string
         {
-            return ArticleContent::paragraph([
-                Tag::p($content),
-            ]);
-        }
-
-        public static function image(string $src): string
-        {
-            return ArticleContent::image([
-                Tag::figure([
-                    Tag::img($src),
-                ], [
-                    'wp-block-image',
-                    'aligncenter',
-                    'size-large',
-                ]),
-            ]);
+            return ArticleContent::paragraph([Tag::p($content)]);
         }
 
         public static function video(string $src): string
         {
-            return ArticleContent::video([
-                Tag::figure([
-                    Tag::video($src),
-                ], [
-                    'wp-block-video',
-                ]),
-            ]);
+            return ArticleContent::video([Tag::figure([Tag::video($src)], ['wp-block-video'])]);
         }
 
         public static function audio(string $src): string
         {
-            return ArticleContent::audio([
-                Tag::figure([
-                    Tag::audio($src),
-                ], [
-                    'wp-block-audio',
-                ]),
-            ]);
+            return ArticleContent::audio([Tag::figure([Tag::audio($src)], ['wp-block-audio'])]);
         }
 
         /**
@@ -122,7 +182,7 @@
             return ArticleContent::shortcode($shortcode);
         }
 
-        public static function DPlayer(string $url, string $theme = '#FADFA3', string $lang = 'zh-cn', string $pic = '', string $thumbnails = '', bool $unlimited = true, string $type = 'auto', string $logo = null, float $volume = 0.7, bool $loop = false, bool $screenshot = true, bool $hotkey = true, bool $preload = false, bool $mutex = false, bool $autoplay = false): string
+        public static function dPlayer(string $url, string $theme = '#FADFA3', string $lang = 'zh-cn', string $pic = '', string $thumbnails = '', bool $unlimited = true, string $type = 'auto', string $logo = null, float $volume = 0.7, bool $loop = false, bool $screenshot = true, bool $hotkey = true, bool $preload = false, bool $mutex = false, bool $autoplay = false): string
         {
             $shortcode = static::singleShortcode('dplayer', [
                 "url"        => $url,
@@ -141,6 +201,13 @@
                 "preload"    => $preload,
                 "mutex"      => $mutex,
             ]);
+
+            return ArticleContent::shortcode($shortcode);
+        }
+
+        public static function hideContent($content): string
+        {
+            $shortcode = static::doubleShortcode('hidecontent', $content, ["type" => 'payshow']);
 
             return ArticleContent::shortcode($shortcode);
         }
@@ -171,7 +238,7 @@
             return implode(' ', $value);
         }
 
-        public static function doubleShortcode($name, $text, $kv)
+        public static function doubleShortcode($name, $text, $kv): string
         {
             $value   = [];
             $value[] = "[$name ";

@@ -3,9 +3,9 @@
     require 'common.php';
 
     $replace = [
-//        "dev6041"        => "dev6080",
-//        "http://dev6041" => "http://dev6080",
-//        "/var/www/6041/" => "/var/www/6080/",
+        "dev6081"        => "dev6084",
+        "http://dev6081" => "http://dev6084",
+        "/var/www/6081/" => "/var/www/6084/",
         "大白熊"         => "牛牛",
     ];
 
