@@ -22,9 +22,9 @@
         ];
 
         protected array $indexSentence = [
-            "user_login"    => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "user_nicename" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "user_email"    => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "user_login"    => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "user_nicename" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "user_email"    => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
         public function setIDField(string $value): static

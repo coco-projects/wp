@@ -27,11 +27,11 @@
         ];
 
         protected array $indexSentence = [
-            "comment_post_ID"                   => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "comment_approved,comment_date_gmt" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "comment_date_gmt"                  => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "comment_parent"                    => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "comment_author_email"              => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "comment_post_ID"                   => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "comment_approved,comment_date_gmt" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "comment_date_gmt"                  => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "comment_parent"                    => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "comment_author_email"              => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
 

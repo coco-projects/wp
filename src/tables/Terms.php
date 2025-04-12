@@ -16,8 +16,8 @@
         ];
 
         protected array $indexSentence = [
-            "slug" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "name" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "slug" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "name" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
         public function setTermIdField(string $value): static

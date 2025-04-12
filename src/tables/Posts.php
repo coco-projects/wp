@@ -35,10 +35,10 @@
         ];
 
         protected array $indexSentence = [
-            "post_name"                          => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "post_type,post_status,post_date,ID" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "post_parent"                        => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "post_author"                        => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "post_name"                          => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "post_type,post_status,post_date,ID" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "post_parent"                        => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "post_author"                        => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
         public function setIDField(string $value): static

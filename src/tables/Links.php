@@ -25,7 +25,7 @@
         ];
 
         protected array $indexSentence = [
-            "link_visible" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "link_visible" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
 

@@ -16,7 +16,7 @@
         ];
 
         protected array $indexSentence = [
-            "autoload" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "autoload" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
         public function setOptionIdField(string $value): static

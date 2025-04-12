@@ -16,8 +16,8 @@
         ];
 
         protected array $indexSentence = [
-            "user_id"  => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "meta_key" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "user_id"  => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "meta_key" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
         public function setUmetaIdField(string $value): static

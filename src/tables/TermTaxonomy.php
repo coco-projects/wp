@@ -18,7 +18,7 @@
         ];
 
         protected array $indexSentence = [
-            "taxonomy" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "taxonomy" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
         public function setTermTaxonomyIdField(string $value): static

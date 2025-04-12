@@ -16,8 +16,8 @@
         ];
 
         protected array $indexSentence = [
-            "comment_id" => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
-            "meta_key"   => "KEY `__FIELD__NAME___index` (`__FIELD__NAME__`),",
+            "comment_id" => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
+            "meta_key"   => "KEY `__INDEX__NAME___index` ( __FIELD__NAME__ ),",
         ];
 
         public function setMetaIdField(string $value): static
