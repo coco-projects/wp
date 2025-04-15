@@ -16,7 +16,6 @@
     use Coco\wp\tables\Usermeta;
     use Coco\wp\tables\Users;
     use DI\Container;
-    use function _PHPStan_5473b6701\RingCentral\Psr7\str;
 
     class Manager
     {
@@ -565,7 +564,6 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             ]))->where($termTaxonomyTable->getName() . '.' . $termTaxonomyTable->getTaxonomyField(), '=', $taxonomy)
                 ->where($whereNames)
                 ->join($termTable->getName(), $termTaxonomyTable->getName() . '.' . $termTaxonomyTable->getTermIdField() . ' = ' . $termTable->getName() . '.' . $termTable->getTermIdField(), 'left')
-                //->fetchSql()
                 ->select();
 
             $result = [];
@@ -1005,7 +1003,8 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
 
             foreach ($keys as $k => $v)
             {
-                $postmetaTable->tableIns()->where(...$postWhere)->where($postmetaTable->getMetaKeyField(), '=', $v)->delete();
+                $postmetaTable->tableIns()->where(...$postWhere)->where($postmetaTable->getMetaKeyField(), '=', $v)
+                    ->delete();
             }
         }
 
@@ -1227,9 +1226,10 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             $fileInfo = pathinfo($file);
 
             $fileName = hrtime(true) . '.' . $fileInfo['extension'];
+            $md5      = md5($fileName);
 
-            // 2025/04/09/864335431541458.jpg
-            $saveName = date('Y/m/d') . DIRECTORY_SEPARATOR . $fileName;
+            // 2025/04-14/16/400612345107640.jpg
+            $saveName = date('Y/m-d') . DIRECTORY_SEPARATOR . substr($md5, 0, 2) . DIRECTORY_SEPARATOR . $fileName;
 
             // http://dev6080/wp-content/uploads/2025/04/09/864335431541458.jpg
             $guid = trim($domain, '\/') . '/wp-content/uploads/' . $saveName;
