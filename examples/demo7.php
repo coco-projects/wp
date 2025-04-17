@@ -40,10 +40,10 @@
     echo WpTag::hr();
     echo PHP_EOL;
 
-    echo WpTag::aBlock($telegraphvideo1, 'a 按钮');
+    echo WpTag::aBlock($telegraphvideo1, 'a 按钮', 'red');
     echo PHP_EOL;
 
-    echo WpTag::p('一个段落');
+    echo WpTag::p('一个段落', 'blue');
     echo PHP_EOL;
 
     echo WpTag::p([
@@ -52,29 +52,30 @@
     ]);
     echo PHP_EOL;
 
-    echo WpTag::image($telegraphImg2);
-    echo PHP_EOL;
-
     echo WpTag::audio($telegraphAudio1);
     echo PHP_EOL;
 
     echo WpTag::video($telegraphvideo1);
     echo PHP_EOL;
 
-    echo WpTag::easyVideoPlayer($telegraphvideo1);
-    echo PHP_EOL;
-
     echo WpTag::dPlayer($telegraphvideo1);
     echo PHP_EOL;
 
-    echo WpTag:: quote([
+    echo WpTag:: listQuote([
         '图片描述11',
         '图片描述22',
         '图片描述33',
     ]);
     echo PHP_EOL;
 
-    echo WpTag:: hideContent(WpTag:: quote([
+    echo WpTag:: list([
+        '图片描述11',
+        '图片描述22',
+        '图片描述33',
+    ], 'red', '16px');
+    echo PHP_EOL;
+
+    echo WpTag:: hideContent(WpTag::listQuote([
         '图片描述11',
         '图片描述22',
         '图片描述33',
@@ -83,12 +84,23 @@
 
     echo WpTag:: buttons([
         [
-            "link" => 'https://baidu.com',
-            "text" => "按钮111",
+            "link"         => 'https://baidu.com',
+            "text"         => "按钮111",
+            "target"       => '_self',
+            "textColor"    => '#ff0000',
+            "textBgColor"  => '#0000ff',
+            "fontSize"     => '20px',
+            "borderRadius" => '18px',
         ],
         [
-            "link" => 'https://baidu.com',
-            "text" => "按钮222",
+            "link"     => 'https://baidu.com',
+            "text"     => "按钮222",
+            "btnColor" => "green",
+        ],
+        [
+            "link"     => 'https://baidu.com',
+            "text"     => "按钮333",
+            "btnColor" => "red",
         ],
     ]);
     echo PHP_EOL;
@@ -108,6 +120,164 @@
     ]);
     echo PHP_EOL;
 
+    echo WpTag::zibllTabs([
+        [
+            "title"   => "标签11",
+            "content" => WpTag:: list([
+                '图片描述11',
+                '图片描述22',
+                '图片描述33',
+            ], 'green'),
+        ],
+        [
+            "title"   => "标签22",
+            "content" => WpTag:: listQuote([
+                '图片描述11',
+                '图片描述22',
+                '图片描述33',
+            ]),
+        ],
 
+        [
+            "title"   => "标签11",
+            "content" => WpTag::p('111'),
 
+        ],
 
+        [
+            "title"   => "标签22",
+            "content" => WpTag::p('222'),
+
+        ],
+
+        [
+            "title"   => "标签33",
+            "content" => WpTag::p('333'),
+
+        ],
+
+    ], 1);
+
+    echo WpTag:: details('【点击查看详细介绍】', [
+        WpTag::p('333'),
+
+        WpTag:: buttons([
+            [
+                "link"     => 'https://baidu.com',
+                "text"     => "按钮111",
+                "btnColor" => "orange",
+            ],
+            [
+                "link" => 'https://baidu.com',
+                "text" => "按钮222",
+            ],
+        ]),
+
+    ], !true, 'red', '16px');
+    echo PHP_EOL;
+
+    echo WpTag:: zibllDetails('【点击查看详细介绍】', [
+        WpTag::p('333'),
+
+        WpTag:: buttons([
+            [
+                "link"     => 'https://baidu.com',
+                "text"     => "按钮111",
+                "btnColor" => "orange",
+            ],
+            [
+                "link" => 'https://baidu.com',
+                "text" => "按钮222",
+            ],
+        ]),
+
+    ], !true);
+
+    echo PHP_EOL;
+
+    echo WpTag::groupConstrained([
+        WpTag::p('333'),
+        WpTag::p('444'),
+        WpTag::p('555'),
+    ]);
+    echo PHP_EOL;
+    echo WpTag::groupFlexHorizontal([
+        WpTag::p('333'),
+        WpTag::p('444'),
+        WpTag::p('555'),
+
+    ], true, 'center');
+    echo PHP_EOL;
+
+    echo WpTag::groupFlexVertical([
+        WpTag::p('333'),
+        WpTag::p('444'),
+        WpTag::p('555'),
+
+    ], false, 'center');
+    echo PHP_EOL;
+
+    echo WpTag::groupGrid([
+        WpTag::p('111'),
+        WpTag::p('222'),
+        WpTag::p('333'),
+        WpTag::p('444'),
+        WpTag::p('555'),
+        WpTag::p('666'),
+
+    ], null, 16);
+    echo PHP_EOL;
+
+    echo WpTag::image($telegraphImg2, 190);
+    echo PHP_EOL;
+
+    echo WpTag::image($telegraphImg2, 0, 190, '2/3', 'contain');
+
+    echo PHP_EOL;
+    echo WpTag::image($telegraphImg2, 210, 0, 'auto', 'cover');
+    echo PHP_EOL;
+
+    echo WpTag::image($telegraphImg2, 0, 0, 'auto', 'contain');
+    echo PHP_EOL;
+
+    echo WpTag::columnsAvg([
+        WpTag::p('111'),
+        WpTag::p('222'),
+        WpTag::p('333'),
+        WpTag::p('666'),
+
+    ]);
+    echo PHP_EOL;
+
+    echo WpTag::columns([
+        [
+            "content" => WpTag::p('111'),
+            "width"   => "25%",
+        ],
+        [
+            "content" => WpTag::p('222'),
+            "width"   => "25%",
+        ],
+        [
+            "content" => WpTag::p('333'),
+        ],
+    ]);
+    echo PHP_EOL;
+
+    echo WpTag::columns([
+        [
+            "content" => WpTag::p('111'),
+            "width"   => "120px",
+        ],
+        [
+            "content" => WpTag::p('222'),
+            "width"   => "250px",
+        ],
+        [
+            "content" => WpTag::p('333'),
+        ],
+    ]);
+    echo PHP_EOL;
+
+    echo WpTag::tagCloud();
+    echo PHP_EOL;

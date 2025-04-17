@@ -5,9 +5,43 @@
     class ArticleContent
     {
 
+        /*-------------------------------------------------------*/
+        //原生标签
+        /*-------------------------------------------------------*/
+
+        public static function listItem(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('list-item', $content, $attrs);
+        }
+
+        public static function list(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('list', $content, $attrs);
+        }
+
+        public static function details(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('details', $content, $attrs);
+        }
+
+        public static function columns(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('columns', $content, $attrs);
+        }
+
+        public static function column(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('column', $content, $attrs);
+        }
+
         public static function quote(mixed $content, $attrs = []): string
         {
             return static::wpWrapper('quote', $content, $attrs);
+        }
+
+        public static function group(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('group', $content, $attrs);
         }
 
         public static function heading(mixed $content, $attrs = []): string
@@ -71,6 +105,28 @@
         }
 
         /*-------------------------------------------------------*/
+        //zibll 标签
+        /*-------------------------------------------------------*/
+
+        public static function zibllblockTabs(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('zibllblock/tabs', $content, $attrs);
+        }
+
+        public static function zibllblockTab(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('zibllblock/tab', $content, $attrs);
+        }
+
+        public static function zibllblockCollapse(mixed $content, $attrs = []): string
+        {
+            return static::wpWrapper('zibllblock/collapse', $content, $attrs);
+        }
+
+
+        /*-------------------------------------------------------*/
+        //通用方法
+        /*-------------------------------------------------------*/
 
         public static function wpWrapper(string $tagName, mixed $content = '', $attrs = []): string
         {
@@ -88,6 +144,19 @@ str;
                 "__TAG__"     => $tagName,
                 "__CONTENT__" => $str,
                 "__ATTR__"    => count($attrs) ? json_encode($attrs, 256) : '',
+            ]);
+        }
+
+        public static function wpSingleWrapper(string $tagName, $attrs = []): string
+        {
+            $temp = <<<str
+<!-- wp:__TAG__ /-->
+
+str;
+
+            return strtr($temp, [
+                "__TAG__"  => $tagName,
+                "__ATTR__" => count($attrs) ? json_encode($attrs, 256) : '',
             ]);
         }
 

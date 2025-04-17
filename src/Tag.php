@@ -9,37 +9,41 @@
 
     class Tag
     {
-        public static function button(string $link, string $text = '', string $target = "_blank"): string
+        public static function button(string $link, string $text = '', string $target = "_blank", string $fontSize = "14px", string $borderRadius = "10px", string $fontColor = "#9bff9b", string $backgroundColor = "#cccccc"): string
         {
-            return Div::ins()->inner(function(DoubleTag $this_, array &$inner) use ($text, $link, $target) {
+            return Div::ins()->inner(function(DoubleTag $this_, array &$inner) use (
+                $fontSize, $borderRadius, $fontColor, $backgroundColor, $text, $link, $target
+            ) {
                 $this_->getAttr('class')->addAttrsArray([
-                    'wp-block-button',
-                    'has-custom-font-size',
-                    'is-style-fill',
+                    "wp-block-button",
+                    "has-custom-font-size",
                 ]);
 
                 $this_->getAttr('style')->importKv([
-                    "font-size" => "14px",
+                    "font-size" => $fontSize,
                 ]);
 
-                $inner[] = DoubleTag::ins('a')
-                    ->inner(function(DoubleTag $this_, array &$inner) use ($text, $link, $target) {
-                        $this_->getAttr('href')->setAttrKv('href', $link);
-                        $this_->getAttr('target')->setAttrKv('target', $target);
+                $inner[] = DoubleTag::ins('a')->inner(function(DoubleTag $this_, array &$inner) use (
+                    $fontSize, $borderRadius, $fontColor, $backgroundColor, $text, $link, $target
+                ) {
+                    $this_->getAttr('href')->setAttrKv('href', $link);
+                    $this_->getAttr('target')->setAttrKv('target', $target);
 
-                        $this_->getAttr('class')->addAttrsArray([
-                            'wp-block-button__link',
-                            'has-luminous-vivid-orange-background-color',
-                            'has-background',
-                            'wp-element-button',
-                            '',
-                        ]);
+                    $this_->getAttr('class')->addAttrsArray([
+                        "wp-block-button__link",
+                        "has-text-color",
+                        "has-background",
+                        "has-link-color",
+                        "wp-element-button",
+                    ]);
 
-                        $this_->getAttr('style')->importKv([
-                            "border-radius" => "10px",
-                        ]);
-                        $inner[] = $text;
-                    });
+                    $this_->getAttr('style')->importKv([
+                        "border-radius"    => $borderRadius,
+                        "color"            => $fontColor,
+                        "background-color" => $backgroundColor,
+                    ]);
+                    $inner[] = $text;
+                });
             })->render();
         }
 
@@ -52,25 +56,157 @@
             })->render();
         }
 
-        public static function a(string $link, string $text = '', string $target = "_blank"): string
+        public static function a(string $link, string $text = '', string $target = "_blank", array $classes = [], array $kvAttr = []): string
         {
             !$text && $text = $link;
 
-            return DoubleTag::ins('a')->inner(function(DoubleTag $this_, array &$inner) use ($text, $link, $target) {
-                $this_->getAttr('href')->setAttrKv('href', $link);
-                $this_->getAttr('target')->setAttrKv('target', $target);
+            return DoubleTag::ins('a')
+                ->inner(function(DoubleTag $this_, array &$inner) use ($text, $link, $target, $classes, $kvAttr) {
+                    $this_->getAttr('class')->addAttrsArray($classes);
+                    $this_->getAttr('href')->setAttrKv('href', $link);
+                    $this_->getAttr('target')->setAttrKv('target', $target);
 
-                $inner[] = $text;
-            })->render();
+                    $this_->attrsRegistry->appendAttrKvArr($kvAttr);
+
+                    $inner[] = $text;
+                })->render();
         }
 
-        public static function p(mixed $content, array $classes = []): string
+        public static function ul(mixed $content, $fontColor = '#111111', $backgroundColor = '#eeeeee', $fontSize = '14px', array $classes = []): string
         {
-            return DoubleTag::ins('p')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+            return DoubleTag::ins('ul')
+                ->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes, $fontColor, $fontSize, $backgroundColor) {
+                    $this_->getAttr('class')->addAttrsArray($classes);
+                    $this_->getAttr('class')->addAttrsArray([
+                        "wp-block-list",
+                        "has-text-color",
+                        "has-background",
+                        "has-link-color",
+                    ]);
+
+                    $this_->getAttr('style')->importKv([
+                        "color"            => $fontColor,
+                        "font-size"        => $fontSize,
+                        "background-color" => $backgroundColor,
+                    ]);
+
+                    $inner[] = $content;
+                })->render();
+        }
+
+        public static function li(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('li')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
                 $this_->getAttr('class')->addAttrsArray($classes);
 
                 $inner[] = $content;
             })->render();
+        }
+
+        public static function i(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('i')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function strong(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('strong')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function details(mixed $content, $fontColor = '#111111', $backgroundColor = '#eeeeee', $fontSize = '14px', array $classes = []): string
+        {
+            return DoubleTag::ins('details')
+                ->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes, $fontSize, $fontColor, $backgroundColor) {
+                    $this_->getAttr('class')->addAttrsArray($classes);
+                    $this_->getAttr('class')->addAttrsArray([
+                        "wp-block-details",
+                        "has-text-color",
+                        "has-background",
+                        "has-link-color",
+                    ]);
+
+                    $this_->getAttr('style')->importKv([
+                        "color"            => $fontColor,
+                        "background-color" => $backgroundColor,
+                        "font-size"        => $fontSize,
+                    ]);
+
+                    $inner[] = $content;
+                })->render();
+        }
+
+        public static function summary(mixed $content, array $classes = []): string
+        {
+            return DoubleTag::ins('summary')->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function columns(mixed $content, array $classes = []): string
+        {
+            return Div::ins()->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    "wp-block-columns",
+                ]);
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function column(mixed $content, string $width, array $classes = []): string
+        {
+            return Div::ins()->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes, $width) {
+                $this_->getAttr('class')->addAttrsArray($classes);
+                $this_->getAttr('class')->addAttrsArray([
+                    "wp-block-column",
+                ]);
+
+                if ((int)$width)
+                {
+                    $this_->getAttr('style')->importKv([
+                        "flex-basis" => $width,
+                    ]);
+                }
+
+                $inner[] = $content;
+            })->render();
+        }
+
+        public static function p(mixed $content, $fontColor = '#111111', $backgroundColor = '#eeeeee', $fontSize = '14px', array $classes = []): string
+        {
+            return DoubleTag::ins('p')
+                ->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes, $fontSize, $fontColor, $backgroundColor) {
+                    $this_->getAttr('class')->addAttrsArray($classes);
+
+                    $this_->getAttr('style')->importKv([
+                        "color"            => $fontColor,
+                        "background-color" => $backgroundColor,
+                        "font-size"        => $fontSize,
+                    ]);
+
+                    $inner[] = $content;
+                })->render();
+        }
+
+        public static function div(mixed $content, array $classes = [], array $kvAttr = []): string
+        {
+            return DoubleTag::ins('div')
+                ->inner(function(DoubleTag $this_, array &$inner) use ($content, $kvAttr, $classes) {
+                    $this_->getAttr('class')->addAttrsArray($classes);
+                    $this_->attrsRegistry->appendAttrKvArr($kvAttr);
+
+                    $inner[] = $content;
+                })->render();
         }
 
         public static function h1(mixed $content, array $classes = []): string
@@ -168,17 +304,16 @@
                 })->render();
         }
 
-        public static function img(string $src, string $alt = '', array $classes = []): string
+        public static function img(string $src, string $alt = '', array $classes = [], array $style = []): string
         {
-            return SingleTag::ins('img')->inner(function(SingleTag $this_, array &$inner) use ($src, $alt, $classes) {
-                $this_->getAttr('src')->setAttrKv('src', $src);
-                $this_->getAttr('alt')->setAttrKv('alt', $alt);
-                $this_->getAttr('class')->addAttrsArray($classes);
-                $this_->getAttr('style')->importKv([
-                    "object-fit" => "cover",
-                ]);
+            return SingleTag::ins('img')
+                ->inner(function(SingleTag $this_, array &$inner) use ($style, $src, $alt, $classes) {
+                    $this_->getAttr('src')->setAttrKv('src', $src);
+                    $this_->getAttr('alt')->setAttrKv('alt', $alt);
+                    $this_->getAttr('class')->addAttrsArray($classes);
+                    $this_->getAttr('style')->importKv($style);
 
-            })->render();
+                })->render();
         }
 
         public static function video(string $src, array $classes = []): string
