@@ -160,7 +160,7 @@ str;
             ]);
         }
 
-        private static function contentToString(mixed $content)
+        public static function contentToString(mixed $content)
         {
             static $processed = []; // 记录已处理的对象或数组，避免死循环
 
