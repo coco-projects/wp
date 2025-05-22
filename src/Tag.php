@@ -84,11 +84,15 @@
                         "has-link-color",
                     ]);
 
-                    $this_->getAttr('style')->importKv([
-                        "color"            => $fontColor,
-                        "font-size"        => $fontSize,
-                        "background-color" => $backgroundColor,
-                    ]);
+                    $attr = [
+                        "color"     => $fontColor,
+                        "font-size" => $fontSize,
+                    ];
+                    if ($backgroundColor)
+                    {
+                        $attr["background-color"] = $backgroundColor;
+                    }
+                    $this_->getAttr('style')->importKv($attr);
 
                     $inner[] = $content;
                 })->render();
@@ -101,6 +105,26 @@
 
                 $inner[] = $content;
             })->render();
+        }
+
+        public static function span(mixed $content, $fontColor = '#999999', $backgroundColor = '', $fontSize = '14px', array $classes = []): string
+        {
+            return DoubleTag::ins('span')
+                ->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes, $fontSize, $fontColor, $backgroundColor) {
+                    $this_->getAttr('class')->addAttrsArray($classes);
+
+                    $attr = [
+                        "color"     => $fontColor,
+                        "font-size" => $fontSize,
+                    ];
+                    if ($backgroundColor)
+                    {
+                        $attr["background-color"] = $backgroundColor;
+                    }
+                    $this_->getAttr('style')->importKv($attr);
+
+                    $inner[] = $content;
+                })->render();
         }
 
         public static function i(mixed $content, array $classes = []): string
@@ -133,11 +157,15 @@
                         "has-link-color",
                     ]);
 
-                    $this_->getAttr('style')->importKv([
-                        "color"            => $fontColor,
-                        "background-color" => $backgroundColor,
-                        "font-size"        => $fontSize,
-                    ]);
+                    $attr = [
+                        "color"     => $fontColor,
+                        "font-size" => $fontSize,
+                    ];
+                    if ($backgroundColor)
+                    {
+                        $attr["background-color"] = $backgroundColor;
+                    }
+                    $this_->getAttr('style')->importKv($attr);
 
                     $inner[] = $content;
                 })->render();
@@ -188,11 +216,16 @@
                 ->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes, $fontSize, $fontColor, $backgroundColor) {
                     $this_->getAttr('class')->addAttrsArray($classes);
 
-                    $this_->getAttr('style')->importKv([
-                        "color"            => $fontColor,
-                        "background-color" => $backgroundColor,
-                        "font-size"        => $fontSize,
-                    ]);
+
+                    $attr = [
+                        "color"     => $fontColor,
+                        "font-size" => $fontSize,
+                    ];
+                    if ($backgroundColor)
+                    {
+                        $attr["background-color"] = $backgroundColor;
+                    }
+                    $this_->getAttr('style')->importKv($attr);
 
                     $inner[] = $content;
                 })->render();

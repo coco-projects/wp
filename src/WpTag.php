@@ -7,10 +7,10 @@
 
     class WpTag
     {
-        const  colorMap = [
+        const  bgColorMap = [
             "default" => [
                 "bg"   => "#ffffff",
-                "text" => "#000000",
+                "text" => "#111111",
             ],
             "red"     => [
                 "bg"   => "#ff5722",
@@ -39,6 +39,41 @@
             "gray"    => [
                 "bg"   => "#fafafa",
                 "text" => "#5f5f5f",
+            ],
+        ];
+
+        const  textColorMap = [
+            "default" => [
+                "bg"   => "",
+                "text" => "#555555",
+            ],
+            "red"     => [
+                "bg"   => "",
+                "text" => "#ff5722",
+            ],
+            "orange"  => [
+                "bg"   => "",
+                "text" => "#ffb800",
+            ],
+            "green"   => [
+                "bg"   => "",
+                "text" => "#16baaa",
+            ],
+            "blue"    => [
+                "bg"   => "",
+                "text" => "#1e9fff",
+            ],
+            "purple"  => [
+                "bg"   => "",
+                "text" => "#a233c6",
+            ],
+            "black"   => [
+                "bg"   => "",
+                "text" => "#2f363c",
+            ],
+            "gray"    => [
+                "bg"   => "",
+                "text" => "#999999",
             ],
         ];
 
@@ -280,14 +315,14 @@
             ]));
         }
 
-        public static function list(array $texts, string $color = 'gray', string $fontSize = '14px'): string
+        public static function list(array $texts, string $color = 'default', string $fontSize = '14px'): string
         {
-            if (!isset(static::colorMap[$color]))
+            if (!isset(static::textColorMap[$color]))
             {
                 $color = 'gray';
             }
-            $textColor   = static::colorMap[$color]['text'];
-            $textBgColor = static::colorMap[$color]['bg'];
+            $textColor   = static::textColorMap[$color]['text'];
+            $textBgColor = static::textColorMap[$color]['bg'];
 
             $item = [];
             foreach ($texts as $text)
@@ -316,14 +351,14 @@
             ]);
         }
 
-        public static function details(string $title, mixed $texts, bool $isOpen = true, string $color = 'gray', string $fontSize = '14px'): string
+        public static function details(string $title, mixed $texts, bool $isOpen = true, string $color = 'default', string $fontSize = '14px'): string
         {
-            if (!isset(static::colorMap[$color]))
+            if (!isset(static::textColorMap[$color]))
             {
-                $color = 'gray';
+                $color = 'default';
             }
-            $fontColor       = static::colorMap[$color]['text'];
-            $backgroundColor = static::colorMap[$color]['bg'];
+            $fontColor       = static::textColorMap[$color]['text'];
+            $backgroundColor = static::textColorMap[$color]['bg'];
 
             return ArticleContent::details(Tag::details([
                 Tag::summary($title),
@@ -449,10 +484,10 @@
                 $textColor    = $button['textColor'] ?? '#dddddd';
                 $textBgColor  = $button['textBgColor'] ?? '#3d3d3d';
 
-                if (isset($button['btnColor']) && isset(static::colorMap[$button['btnColor']]))
+                if (isset($button['btnColor']) && isset(static::bgColorMap[$button['btnColor']]))
                 {
-                    $textColor   = static::colorMap[$button['btnColor']]['text'];
-                    $textBgColor = static::colorMap[$button['btnColor']]['bg'];
+                    $textColor   = static::bgColorMap[$button['btnColor']]['text'];
+                    $textBgColor = static::bgColorMap[$button['btnColor']]['bg'];
                 }
 
                 $btn = Tag::button($button['link'], $button['text'], $button['target'] ?? '_blank', $fontSize, $borderRadius, $textColor, $textBgColor,);
@@ -614,24 +649,24 @@
 
         public static function aBlock(string $link, string $text = '', string $color = 'default', string $target = "_blank"): string
         {
-            if (!isset(static::colorMap[$color]))
+            if (!isset(static::textColorMap[$color]))
             {
                 $color = 'default';
             }
-            $fontColor       = static::colorMap[$color]['text'];
-            $backgroundColor = static::colorMap[$color]['bg'];
+            $fontColor       = static::textColorMap[$color]['text'];
+            $backgroundColor = static::textColorMap[$color]['bg'];
 
             return ArticleContent::paragraph([Tag::a($link, Tag::p($text, $fontColor, $backgroundColor), $target)]);
         }
 
         public static function p(mixed $content, string $color = 'default', $fontSize = '14px'): string
         {
-            if (!isset(static::colorMap[$color]))
+            if (!isset(static::textColorMap[$color]))
             {
                 $color = 'default';
             }
-            $fontColor       = static::colorMap[$color]['text'];
-            $backgroundColor = static::colorMap[$color]['bg'];
+            $fontColor       = static::textColorMap[$color]['text'];
+            $backgroundColor = static::textColorMap[$color]['bg'];
 
             return ArticleContent::paragraph([Tag::p($content, $fontColor, $backgroundColor, $fontSize)]);
         }
@@ -676,9 +711,51 @@
             return ArticleContent::shortcode($shortcode);
         }
 
-        public static function tagCloud(): string
+        public static function tagCloudCategory(string $smallestFontSize = '10pt', string $largestFontSize = '28pt', int $numberOfTags = 100, bool $showTagCounts = true): string
         {
-            return ArticleContent::wpSingleWrapper('tag-cloud');
+            return static::tagCloud('category', $smallestFontSize, $largestFontSize, $numberOfTags, $showTagCounts);
+        }
+
+        public static function tagCloudPostTag(string $smallestFontSize = '10pt', string $largestFontSize = '28pt', int $numberOfTags = 100, bool $showTagCounts = true): string
+        {
+            return static::tagCloud('post_tag', $smallestFontSize, $largestFontSize, $numberOfTags, $showTagCounts);
+        }
+
+        public static function tagCloudTopics(string $smallestFontSize = '10pt', string $largestFontSize = '28pt', int $numberOfTags = 100, bool $showTagCounts = true): string
+        {
+            return static::tagCloud('topics', $smallestFontSize, $largestFontSize, $numberOfTags, $showTagCounts);
+        }
+
+        public static function tagCloudForumTopic(string $smallestFontSize = '10pt', string $largestFontSize = '28pt', int $numberOfTags = 100, bool $showTagCounts = true): string
+        {
+            return static::tagCloud('forum_topic', $smallestFontSize, $largestFontSize, $numberOfTags, $showTagCounts);
+        }
+
+        public static function tagCloudForumTag(string $smallestFontSize = '10pt', string $largestFontSize = '28pt', int $numberOfTags = 100, bool $showTagCounts = true): string
+        {
+            return static::tagCloud('forum_tag', $smallestFontSize, $largestFontSize, $numberOfTags, $showTagCounts);
+        }
+
+        /**
+         * @param string $taxonomy category,post_tag,topics,forum_topic,forum_tag
+         * @param string $smallestFontSize
+         * @param string $largestFontSize
+         * @param int    $numberOfTags
+         * @param bool   $showTagCounts
+         *
+         * @return string
+         */
+        protected static function tagCloud(string $taxonomy = 'tags', string $smallestFontSize = '10pt', string $largestFontSize = '28pt', int $numberOfTags = 100, bool $showTagCounts = true): string
+        {
+            $attrs = [
+                "numberOfTags"     => $numberOfTags,
+                "showTagCounts"    => $showTagCounts,
+                "smallestFontSize" => $smallestFontSize,
+                "largestFontSize"  => $largestFontSize,
+                "taxonomy"         => $taxonomy,
+            ];
+
+            return ArticleContent::wpSingleWrapper('tag-cloud', $attrs);
         }
 
         public static function singleShortcode($name, $kv): string

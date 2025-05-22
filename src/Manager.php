@@ -455,12 +455,6 @@
          *
          * */
 
-        /*
-         *
-         * ------------------------------------------------------
-         *
-         * */
-
         public function addCategory($name): int|string
         {
             return $this->addTerm($name, 'category');
@@ -512,6 +506,11 @@
             return $this->getTermsByTaxonomy('topics', $names);
         }
 
+        /*
+         *
+         * ------------------------------------------------------
+         *
+         * */
 
         protected function addTerm($name, $taxonomy): int|string
         {
@@ -530,7 +529,7 @@
             ]);
         }
 
-        public function getTermsByTaxonomy(string $taxonomy, array $names = []): array
+        public function getTermsByTaxonomy(string $taxonomy, array $names): array
         {
             $termTaxonomyTable = $this->getTermTaxonomyTable();
             $termTable         = $this->getTermsTable();
@@ -576,7 +575,7 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             return $result;
         }
 
-        protected function addPostTerm($postId, $termTaxonomyId, $order = 0): int|string
+        public function addPostTerm($postId, $termTaxonomyId, $order = 0): int|string
         {
             $termRelationshipsTable = $this->getTermRelationshipsTable();
 
@@ -585,6 +584,23 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                 $termRelationshipsTable->getTermTaxonomyIdField() => $termTaxonomyId,
                 $termRelationshipsTable->getTermOrderField()      => $order,
             ]);
+        }
+
+        public function importPostTerm($postId, $termTaxonomyIdArray): int|string
+        {
+            $termRelationshipsTable = $this->getTermRelationshipsTable();
+
+            $data = [];
+            foreach ($termTaxonomyIdArray as $termTaxonomyId)
+            {
+                $data[] = [
+                    $termRelationshipsTable->getObjectIdField()       => $postId,
+                    $termRelationshipsTable->getTermTaxonomyIdField() => $termTaxonomyId,
+                    $termRelationshipsTable->getTermOrderField()      => 1,
+                ];
+            }
+
+            return $termRelationshipsTable->tableIns()->insertAll($data);
         }
 
         /*
@@ -620,6 +636,37 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             return $tagIds;
         }
 
+        public function deleteAllTags(): void
+        {
+            $termTaxonomyTable      = $this->getTermTaxonomyTable();
+            $termTable              = $this->getTermsTable();
+            $termmetaTable          = $this->getTermmetaTable();
+            $termRelationshipsTable = $this->getTermRelationshipsTable();
+
+            $data = $termTaxonomyTable->tableIns()->field([
+                $termTaxonomyTable->getTermIdField(),
+                $termTaxonomyTable->getTermTaxonomyIdField(),
+            ])->where($termTaxonomyTable->getTaxonomyField(), '=', 'post_tag')->select();
+
+            $term_ids          = [];
+            $term_taxonomy_ids = [];
+
+            foreach ($data as $k => $v)
+            {
+                $term_ids[]          = $v[$termTaxonomyTable->getTermIdField()];
+                $term_taxonomy_ids[] = $v[$termTaxonomyTable->getTermTaxonomyIdField()];
+            }
+
+            $termTaxonomyTable->tableIns()->where($termTaxonomyTable->getTermIdField(), 'in', $term_ids)->delete();
+
+            $termTable->tableIns()->where($termTable->getTermIdField(), 'in', $term_ids)->delete();
+
+            $termmetaTable->tableIns()->where($termmetaTable->getTermIdField(), 'in', $term_ids)->delete();
+
+            $termRelationshipsTable->tableIns()
+                ->where($termRelationshipsTable->getTermTaxonomyIdField(), 'in', $term_taxonomy_ids)->delete();
+        }
+
         /*
          *
          * ------------------------------------------------------
@@ -627,12 +674,14 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
          * */
 
         /**
+         *
+         *
          * @param string      $title
          * @param string      $postContent
          * @param string      $typeId 为 terms 表的 term_id
          * @param string|null $guid
          *
-         * @return int|string
+         * @return int|string 返回当前post 的id
          */
         public function addPost(string $title, string $postContent, string $typeId, string $guid = null): int|string
         {
@@ -683,7 +732,9 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             $termTaxonomyId = $termTaxonomyTable->tableIns()->where($termTaxonomyTable->getTermIdField(), '=', $typeId)
                 ->value($termTaxonomyTable->getTermTaxonomyIdField());
 
-            return $this->addPostTerm($postId, (int)$termTaxonomyId);
+            $this->addPostTerm($postId, (int)$termTaxonomyId);
+
+            return $postId;
         }
 
         public function updatePostContentByGuid(string $guid, string $title = null, string $postContent = null): int
@@ -760,7 +811,8 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                 'vip_1_price'         => ceil($zibpay_price * 0.8),
                 'vip_2_price'         => ceil($zibpay_price * 0.6),
                 'pay_original_price'  => ceil($zibpay_price * 1.6),
-                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                //                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'promotion_tag'       => '',
                 'points_price'        => '',
                 'vip_1_points'        => '',
                 'vip_2_points'        => '',
@@ -823,7 +875,8 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                 'vip_1_price'         => ceil($zibpay_price * 0.8),
                 'vip_2_price'         => ceil($zibpay_price * 0.6),
                 'pay_original_price'  => ceil($zibpay_price * 1.6),
-                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                //                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'promotion_tag'       => '',
                 'points_price'        => '',
                 'vip_1_points'        => '',
                 'vip_2_points'        => '',
@@ -877,7 +930,8 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                 'vip_1_price'         => ceil($zibpay_price * 0.8),
                 'vip_2_price'         => ceil($zibpay_price * 0.6),
                 'pay_original_price'  => ceil($zibpay_price * 1.6),
-                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                //                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'promotion_tag'       => '',
                 'points_price'        => '',
                 'vip_1_points'        => '',
                 'vip_2_points'        => '',
@@ -947,7 +1001,8 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                 'vip_1_price'         => ceil($zibpay_price * 0.8),
                 'vip_2_price'         => ceil($zibpay_price * 0.6),
                 'pay_original_price'  => ceil($zibpay_price * 1.6),
-                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                //                'promotion_tag'       => '<i class="fa fa-fw fa-bolt"></i> 会员购买更便宜',
+                'promotion_tag'       => '',
                 'points_price'        => '',
                 'vip_1_points'        => '',
                 'vip_2_points'        => '',
@@ -1160,6 +1215,13 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             $this->updatePostmeta($post_id, '_thumbnail_id', $thumbnail_post_id);
         }
 
+        public function updatePostSeo(int $post_id, string $title = '', string $keywords = '', string $description = ''): void
+        {
+            $this->updatePostmeta($post_id, 'title', $title);
+            $this->updatePostmeta($post_id, 'keywords', $keywords);
+            $this->updatePostmeta($post_id, 'description', $description);
+        }
+
         public function updatePostmeta($post_id, $key, $value): void
         {
             $postmetaTable = $this->getPostmetaTable();
@@ -1177,12 +1239,16 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                 ],
             ])->delete();
 
-            $postmetaTable->tableIns()->insert([
-                "post_id"    => $post_id,
-                "meta_key"   => $key,
-                "meta_value" => $value,
-            ]);
+            if ($value)
+            {
+                $postmetaTable->tableIns()->insert([
+                    "post_id"    => $post_id,
+                    "meta_key"   => $key,
+                    "meta_value" => $value,
+                ]);
+            }
         }
+
 
         protected function setPostPayInfo(int|string $post_id, string $zibpay_type, string $zibpay_modo, string $zibpay_price, string $zibpay_points_price, array $posts_zibpay): void
         {
@@ -1388,6 +1454,77 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
 
             return $optionTable->tableIns()->select();
         }
+
+        public function purgePostMeta(): void
+        {
+            $termTaxonomyTable      = $this->getTermTaxonomyTable();
+            $termTable              = $this->getTermsTable();
+            $termmetaTable          = $this->getTermmetaTable();
+            $termRelationshipsTable = $this->getTermRelationshipsTable();
+            $postsTable             = $this->getPostsTable();
+            $postmetaTable          = $this->getPostmetaTable();
+
+            $data = $postsTable->tableIns()->column($postsTable->getPkField());
+
+            $postmetaTable->tableIns()->where([
+                [
+                    $postmetaTable->getPostIdField(),
+                    'not in',
+                    $data,
+                ],
+            ])->delete();
+        }
+
+        public function updateTagsCount(): void
+        {
+            $termTaxonomyTable      = $this->getTermTaxonomyTable();
+            $termTable              = $this->getTermsTable();
+            $termmetaTable          = $this->getTermmetaTable();
+            $termRelationshipsTable = $this->getTermRelationshipsTable();
+            $postsTable             = $this->getPostsTable();
+            $postmetaTable          = $this->getPostmetaTable();
+
+            $tagTermTaxonomyIds = $termTaxonomyTable->tableIns()->where([
+                [
+                    $termTaxonomyTable->getTaxonomyField(),
+                    '=',
+                    'post_tag',
+                ],
+            ])->column($termTaxonomyTable->getTermTaxonomyIdField());
+
+            $postIds = $termRelationshipsTable->tableIns()->where([
+                [
+                    $termRelationshipsTable->getTermTaxonomyIdField(),
+                    'in',
+                    $tagTermTaxonomyIds,
+                ],
+            ])->select();
+
+            $counts = [];
+            foreach ($postIds as $k => $v)
+            {
+                if (!isset($counts[$v[$termRelationshipsTable->getTermTaxonomyIdField()]]))
+                {
+                    $counts[$v[$termRelationshipsTable->getTermTaxonomyIdField()]] = 0;
+                }
+
+                $counts[$v[$termRelationshipsTable->getTermTaxonomyIdField()]]++;
+            }
+
+            foreach ($counts as $k => $v)
+            {
+                $termTaxonomyTable->tableIns()->where([
+                    [
+                        $termTaxonomyTable->getTermTaxonomyIdField(),
+                        '=',
+                        $k,
+                    ],
+                ])->update([
+                    $termTaxonomyTable->getCountField() => $v,
+                ]);
+            }
+        }
+
 
         /*
          *
@@ -1597,7 +1734,7 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             }
         }
 
-        public function updateAllPostView($viewsMin, $viewsMax): void
+        public function updateAllPostView($viewsMin = 1, $viewsMax = 20, $force = false): void
         {
             //----------------------------------------------------------------
             $postsTable    = $this->getPostsTable();
@@ -1611,42 +1748,89 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                     '^[0-9]{18,20}$',
                 ],
             ])->order($postsTable->getPkField(), 'asc')->column($postsTable->getPkField());
+            $postIds = array_reverse($postIds);
 
             //----------------------------------------------------------------
 
             //构造每个文章的views
             $viewsArray = [];
 
-            foreach ($postIds as $id)
+            if (!$force)
             {
-                $viewsArray[] = [
-                    $postmetaTable->getPostIdField()    => $id,
-                    $postmetaTable->getMetaKeyField()   => 'views',
-                    $postmetaTable->getMetaValueField() => rand($viewsMin, $viewsMax),
-                ];
+                foreach ($postIds as $k => $id)
+                {
+                    //如果之前不存在，就写入更新
+                    $isExists = $postmetaTable->tableIns()->where([
+                        [
+                            $postmetaTable->getMetaKeyField(),
+                            '=',
+                            'views',
+                        ],
+                        [
+                            $postmetaTable->getPostIdField(),
+                            '=',
+                            $id,
+                        ],
+                    ])->find();
+
+                    if (!$isExists)
+                    {
+                        $viewsArray[] = [
+                            $postmetaTable->getPostIdField()    => $id,
+                            $postmetaTable->getMetaKeyField()   => 'views',
+                            $postmetaTable->getMetaValueField() => round(bcsqrt($k)) * rand($viewsMin, $viewsMax),
+                        ];
+
+                        echo $id;
+                        echo '-';
+                        echo '更新';
+                        echo PHP_EOL;
+                    }
+                    else
+                    {
+                        echo $id;
+                        echo '-';
+                        echo '不更新';
+                        echo PHP_EOL;
+                    }
+                }
+
             }
+            else
+            {
+                foreach ($postIds as $k => $id)
+                {
+                    $viewsArray[] = [
+                        $postmetaTable->getPostIdField()    => $id,
+                        $postmetaTable->getMetaKeyField()   => 'views',
+                        $postmetaTable->getMetaValueField() => round(bcsqrt($k)) * rand($viewsMin, $viewsMax),
+                    ];
 
-            //先删除所有的view，再重新写入
-            $postmetaTable->tableIns()->where([
-                [
-                    $postmetaTable->getMetaKeyField(),
-                    '=',
-                    'views',
-                ],
-            ])->delete();
+                    echo $id;
+                    echo '-';
+                    echo '更新';
+                    echo PHP_EOL;
+                }
 
+                $postmetaTable->tableIns()->where([
+                    [
+                        $postmetaTable->getMetaKeyField(),
+                        '=',
+                        'views',
+                    ],
+                ])->delete();
+            }
             $postmetaTable->tableIns()->insertAll($viewsArray);
         }
 
 //        $begin = '2024-1-5';
 //        $end   = date('Y-m-d');
 //        $times = 222;
-        public function updateAllPostPublishTime($begin, $end, $times): void
+        public function updateAllPostPublishTime($begin, $end, $times, $force = false): void
         {
             $postsTable = $this->getPostsTable();
-            $ids        = $postsTable->tableIns()->field(implode(',', [
-                $postsTable->getPkField(),
-            ]))->order($postsTable->getPkField(), 'asc')->select();
+            $ids        = $postsTable->tableIns()->field(implode(',', [$postsTable->getPkField()]))
+                ->order($postsTable->getPkField(), 'asc')->select();
 
             $totalArticles = count($ids);
 
@@ -1655,6 +1839,8 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
 
             $cishu = 0;
             $data  = $updateTimes[$cishu];
+
+            $article_no = 0;
 
             foreach ($ids as $k => $id)
             {
@@ -1666,24 +1852,40 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                     $cishu++;
                 }
 
-                $date    = $data['timestamp'];
-                $dateGtm = date('Y-m-d H:i:s', strtotime($data['timestamp']) - 3600 * 8);
+                $date_ = date('Y-m-d H:i:s', strtotime($data['timestamp']) + $article_no);
 
-                $postsTable->tableIns()->where([
-                    [
-                        $postsTable->getPkField(),
-                        '=',
-                        $id['ID'],
-                    ],
-                ])->update([
-                    $postsTable->getPostDateField()    => $date,
-                    $postsTable->getPostDateGmtField() => $dateGtm,
+                $date    = $date_;
+                $dateGtm = date('Y-m-d H:i:s', strtotime($date_) - 3600 * 8);
 
+                $dataToInsert = [
+                    $postsTable->getPostDateField()        => $date,
+                    $postsTable->getPostDateGmtField()     => $dateGtm,
                     $postsTable->getPostModifiedField()    => $date,
                     $postsTable->getPostModifiedGmtField() => $dateGtm,
-                ]);
+                ];
+
+                if (!$force)
+                {
+                    $c = $postsTable->tableIns()
+                        ->where($postsTable->getPkField(), '=', $id['ID'])
+                        ->whereTime($postsTable->getPostDateField(), '-1 month')
+                        ->update($dataToInsert);
+                }
+                else
+                {
+                    $c = $postsTable->tableIns()
+                        ->where($postsTable->getPkField(), '=', $id['ID'])
+                        ->update($dataToInsert);
+                }
+                echo $id['ID'];
+                echo '-';
+                echo $c;
+                echo PHP_EOL;
 
                 $itemPerTimes--;
+
+                //每个文章向后递加这么多秒数
+                $article_no += rand(30, 80);
             }
         }
 
@@ -1727,6 +1929,11 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
 
         private static function updateArticleCreateTime($begin, $end, $times, $totalArticles)
         {
+            if (!$totalArticles)
+            {
+                return [];
+            }
+
             // 将开始时间和结束时间转为时间戳
             $startTimestamp = strtotime($begin);
             $endTimestamp   = strtotime($end);
@@ -1751,7 +1958,7 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             for ($i = 0; $i < $times; $i++)
             {
                 $updateTimes[] = [
-                    'timestamp' => date('Y-m-d H:i:s', $currentTimestamp - rand(10000, 70000)),
+                    'timestamp' => date('Y-m-d H:i:s', $currentTimestamp - rand(1000, 7000)),
                     'articles'  => $avgArticles,
                 ];
 

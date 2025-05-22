@@ -192,7 +192,18 @@
         ]),
 
     ], !true);
+    echo PHP_EOL;
 
+    echo WpTag::image($telegraphImg2, 190);
+    echo PHP_EOL;
+
+    echo WpTag::image($telegraphImg2, 0, 190, '2/3', 'contain');
+
+    echo PHP_EOL;
+    echo WpTag::image($telegraphImg2, 210, 0, 'auto', 'cover');
+    echo PHP_EOL;
+
+    echo WpTag::image($telegraphImg2, 0, 0, 'auto', 'contain');
     echo PHP_EOL;
 
     echo WpTag::groupConstrained([
@@ -226,18 +237,6 @@
         WpTag::p('666'),
 
     ], null, 16);
-    echo PHP_EOL;
-
-    echo WpTag::image($telegraphImg2, 190);
-    echo PHP_EOL;
-
-    echo WpTag::image($telegraphImg2, 0, 190, '2/3', 'contain');
-
-    echo PHP_EOL;
-    echo WpTag::image($telegraphImg2, 210, 0, 'auto', 'cover');
-    echo PHP_EOL;
-
-    echo WpTag::image($telegraphImg2, 0, 0, 'auto', 'contain');
     echo PHP_EOL;
 
     echo WpTag::columnsAvg([
@@ -279,5 +278,5 @@
     ]);
     echo PHP_EOL;
 
-    echo WpTag::tagCloud();
+    echo WpTag::tagCloudCategory();
     echo PHP_EOL;
