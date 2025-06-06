@@ -1781,17 +1781,19 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                             $postmetaTable->getMetaValueField() => round(bcsqrt($k)) * rand($viewsMin, $viewsMax),
                         ];
 
-                        echo $id;
-                        echo '-';
-                        echo '更新';
-                        echo PHP_EOL;
+                        echo implode('', [
+                            $id,
+                            '-更新【none-force】',
+                            PHP_EOL,
+                        ]);
                     }
                     else
                     {
-                        echo $id;
-                        echo '-';
-                        echo '不更新';
-                        echo PHP_EOL;
+                        echo implode('', [
+                            $id,
+                            '-没更新【none-force】',
+                            PHP_EOL,
+                        ]);
                     }
                 }
 
@@ -1806,10 +1808,11 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                         $postmetaTable->getMetaValueField() => round(bcsqrt($k)) * rand($viewsMin, $viewsMax),
                     ];
 
-                    echo $id;
-                    echo '-';
-                    echo '更新';
-                    echo PHP_EOL;
+                    echo implode('', [
+                        $id,
+                        '-更新【force】',
+                        PHP_EOL,
+                    ]);
                 }
 
                 $postmetaTable->tableIns()->where([
@@ -1829,7 +1832,8 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
         public function updateAllPostPublishTime($begin, $end, $times, $force = false): void
         {
             $postsTable = $this->getPostsTable();
-            $ids        = $postsTable->tableIns()->field(implode(',', [$postsTable->getPkField()]))
+
+            $ids = $postsTable->tableIns()->field(implode(',', [$postsTable->getPkField()]))
                 ->order($postsTable->getPkField(), 'asc')->select();
 
             $totalArticles = count($ids);
@@ -1866,21 +1870,21 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
 
                 if (!$force)
                 {
-                    $c = $postsTable->tableIns()
-                        ->where($postsTable->getPkField(), '=', $id['ID'])
-                        ->whereTime($postsTable->getPostDateField(), '-1 month')
-                        ->update($dataToInsert);
+                    $c = $postsTable->tableIns()->where($postsTable->getPkField(), '=', $id['ID'])
+                        ->whereTime($postsTable->getPostDateField(), '-1 month')->update($dataToInsert);
                 }
                 else
                 {
-                    $c = $postsTable->tableIns()
-                        ->where($postsTable->getPkField(), '=', $id['ID'])
+                    $c = $postsTable->tableIns()->where($postsTable->getPkField(), '=', $id['ID'])
                         ->update($dataToInsert);
                 }
-                echo $id['ID'];
-                echo '-';
-                echo $c;
-                echo PHP_EOL;
+
+                echo implode('', [
+                    $id['ID'],
+                    '-',
+                    $c ? '已更新' : '不更',
+                    PHP_EOL,
+                ]);
 
                 $itemPerTimes--;
 
@@ -1909,7 +1913,7 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             }
         }
 
-        private function initRedis(): static
+        private function initRedis(): void
         {
             $this->container->set('redisClient', function(Container $container) {
 
@@ -1924,14 +1928,18 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                 return $redis;
             });
 
-            return $this;
         }
 
-        private static function updateArticleCreateTime($begin, $end, $times, $totalArticles)
+        private static function updateArticleCreateTime($begin, $end, $times, $totalArticles): array
         {
             if (!$totalArticles)
             {
                 return [];
+            }
+
+            if ($times > $totalArticles)
+            {
+                $times = $totalArticles;
             }
 
             // 将开始时间和结束时间转为时间戳
@@ -1942,20 +1950,15 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             $updateTimes = [];
 
             //平均间隔秒数
-            $avgInterval = (int)(($endTimestamp - $startTimestamp) / $times);
-
-            if ($times > $totalArticles)
-            {
-                $times = $totalArticles;
-            }
+            $avgInterval = (int)(($endTimestamp - $startTimestamp) / ($times - 1));
 
             //平均每次发布文章数
-            $avgArticles      = ceil($totalArticles / $times);
+            $avgArticles      = (int)ceil($totalArticles / $times);
             $currentTimestamp = $startTimestamp;
 
             $remain = $totalArticles;
 
-            for ($i = 0; $i < $times; $i++)
+            for ($i = 1; $i <= $times; $i++)
             {
                 $updateTimes[] = [
                     'timestamp' => date('Y-m-d H:i:s', $currentTimestamp - rand(1000, 7000)),
