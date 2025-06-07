@@ -4,7 +4,7 @@
 
     $begin = '2021-2-5';
     $end   = date('Y-m-d');
-    $times = 5;
+    $times = 800;
 
-//    $manager->updateAllPostPublishTime($begin, $end, $times);
+    $manager->updateAllPostPublishTime($begin, $end, $times,true);
     $manager->updateAllPostView();

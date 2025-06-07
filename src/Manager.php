@@ -1841,22 +1841,23 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             $updateTimes  = static::updateArticleCreateTime($begin, $end, $times, $totalArticles);
             $itemPerTimes = 0;
 
-            $cishu = 0;
-            $data  = $updateTimes[$cishu];
-
-            $article_no = 0;
+            $cishu      = 0;
+            $incSeconds = 0;
+            $data       = $updateTimes[$cishu];
 
             foreach ($ids as $k => $id)
             {
                 if (!$itemPerTimes)
                 {
-                    $data = $updateTimes[$cishu];
+                    //每次更新的每个文章都加几秒
+                    $incSeconds = 0;
+                    $data       = $updateTimes[$cishu];
                     //每次更新了几条
                     $itemPerTimes = $data['articles'];
                     $cishu++;
                 }
 
-                $date_ = date('Y-m-d H:i:s', strtotime($data['timestamp']) + $article_no);
+                $date_ = date('Y-m-d H:i:s', strtotime($data['timestamp']) + $incSeconds);
 
                 $date    = $date_;
                 $dateGtm = date('Y-m-d H:i:s', strtotime($date_) - 3600 * 8);
@@ -1868,28 +1869,28 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                     $postsTable->getPostModifiedGmtField() => $dateGtm,
                 ];
 
-                if (!$force)
+                if ($force)
                 {
                     $c = $postsTable->tableIns()->where($postsTable->getPkField(), '=', $id['ID'])
-                        ->whereTime($postsTable->getPostDateField(), '-1 month')->update($dataToInsert);
+                        ->update($dataToInsert);
                 }
                 else
                 {
                     $c = $postsTable->tableIns()->where($postsTable->getPkField(), '=', $id['ID'])
-                        ->update($dataToInsert);
+                        ->whereTime($postsTable->getPostDateField(), '-1 month')->update($dataToInsert);
                 }
 
                 echo implode('', [
                     $id['ID'],
                     '-',
-                    $c ? '已更新' : '不更',
+                    $c ? '已更新: '.$date_ : '不更',
                     PHP_EOL,
                 ]);
 
                 $itemPerTimes--;
 
                 //每个文章向后递加这么多秒数
-                $article_no += rand(30, 80);
+                $incSeconds += rand(1, 10);
             }
         }
 
@@ -1932,7 +1933,7 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
 
         private static function updateArticleCreateTime($begin, $end, $times, $totalArticles): array
         {
-            if (!$totalArticles)
+            if ($totalArticles < 1)
             {
                 return [];
             }
@@ -1952,29 +1953,38 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
             //平均间隔秒数
             $avgInterval = (int)(($endTimestamp - $startTimestamp) / ($times - 1));
 
-            //平均每次发布文章数
-            $avgArticles      = (int)ceil($totalArticles / $times);
+            $count = static::divide($totalArticles, $times);
+
             $currentTimestamp = $startTimestamp;
 
-            $remain = $totalArticles;
-
-            for ($i = 1; $i <= $times; $i++)
+            foreach ($count as $k => $v)
             {
-                $updateTimes[] = [
+                $updateTimes[]    = [
                     'timestamp' => date('Y-m-d H:i:s', $currentTimestamp - rand(1000, 7000)),
-                    'articles'  => $avgArticles,
+                    'articles'  => $v,
                 ];
-
-                $remain -= $avgArticles;
-                if ($remain < $avgArticles)
-                {
-                    $avgArticles = $remain;
-                }
                 $currentTimestamp += $avgInterval;
             }
 
-            // 返回生成的更新时间点以及每个时间点的文章数量
             return $updateTimes;
+        }
+
+        private static function divide($total, $parts): array
+        {
+            // 计算基本值和余数
+            $base      = intdiv($total, $parts); // 基本数
+            $remainder = $total % $parts;        // 剩余数
+
+            // 创建数组，初始值为基本数
+            $result = array_fill(0, $parts, $base);
+
+            // 将剩余数均匀分配到数组中的前 $remainder 个元素
+            for ($i = 0; $i < $remainder; $i++)
+            {
+                $result[$i]++;
+            }
+
+            return $result;
         }
 
         private static function getMimeByExt($ext): string
