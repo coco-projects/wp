@@ -65,7 +65,9 @@
                     $this_->getAttr('class')->addAttrsArray($classes);
                     $this_->getAttr('href')->setAttrKv('href', $link);
                     $this_->getAttr('target')->setAttrKv('target', $target);
-
+                    $this_->getAttr('style')->importKv([
+                        "word-wrap"    => 'break-word',
+                    ]);
                     $this_->attrsRegistry->appendAttrKvArr($kvAttr);
 
                     $inner[] = $text;
@@ -88,10 +90,13 @@
                         "color"     => $fontColor,
                         "font-size" => $fontSize,
                     ];
+
                     if ($backgroundColor)
                     {
                         $attr["background-color"] = $backgroundColor;
                     }
+
+                    $attr["word-wrap"] = 'break-word';
                     $this_->getAttr('style')->importKv($attr);
 
                     $inner[] = $content;
@@ -225,6 +230,8 @@
                     {
                         $attr["background-color"] = $backgroundColor;
                     }
+
+                    $attr["word-wrap"] = 'break-word';
                     $this_->getAttr('style')->importKv($attr);
 
                     $inner[] = $content;

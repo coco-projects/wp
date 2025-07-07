@@ -529,7 +529,7 @@
          *
          * @return string
          */
-        public static function image(string $src, int $width = 200, int $height = 0, string $aspectRatio = '9/16', string $scale = 'cover'): string
+        public static function image(string $src, int $width = 0, int $height = 0, string $aspectRatio = 'auto', string $scale = 'cover'): string
         {
             $aspectRatioMap = [
                 'auto',
