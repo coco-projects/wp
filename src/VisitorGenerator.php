@@ -41,9 +41,9 @@
             return $this;
         }
 
-        public function setEnableEchoLog(bool $enableEchoLog = true): static
+        public function setEnableEchoLog(bool $enable = true): static
         {
-            $this->enableEchoLog = $enableEchoLog;
+            $this->enableEchoLog = $enable;
             MatomoClient::enableEchoLog($this->enableEchoLog);
 
             $this->setStandardLogger('VisitorGeneratorLog');
@@ -66,80 +66,31 @@
             return $this;
         }
 
-        public function setUv(int $lowUv = 0, int $hightUv = 1000): static
-        {
-            $this->lowUv   = $lowUv;
-            $this->hightUv = $hightUv;
-
-            return $this;
-        }
-
         /**
-         * @param string      $startTime
-         * @param string|null $endTime
+         * 启动后不能关闭，必须常驻内存运行
+         * 生成实时访问记录，持续向后生成
          *
-         * @return $this
+         *
+         * @param string $startTime 开始时间可以精确到时分秒
+         * @param string $endTime   结束时间不用写时分秒，始终到当天晚上 23:59:59
+         * @param int    $lowUv
+         * @param int    $aYearUv
+         *
+         * @return void
          */
-        public function setTime(string $startTime, ?string $endTime = null): static
+        public function updateLive(string $startTime, string $endTime, int $lowUv, int $aYearUv): void
         {
+            //延迟多少秒发送
+            $delay           = 60;
+            $intervalSeconds = 2;
+
             $this->startTime = $startTime;
+            $this->endTime   = $endTime;
 
-            if (is_null($endTime))
-            {
-                //当天晚上00点
-                $this->endTime = date('Y-m-d H:i:s');
-            }
-            else
-            {
-                $this->endTime = $endTime;
-            }
+            $this->lowUv   = $lowUv;
+            $this->hightUv = $aYearUv;
 
-            return $this;
-        }
-
-        public function update(): void
-        {
-            $wpPostTab = $this->wpManager->getPostsTable();
-
-            $wpIds = $wpPostTab->tableIns()->where([
-                [
-                    $wpPostTab->getGuidField(),
-                    'regexp',
-                    '^[0-9]{18,20}$',
-                ],
-            ])->field([
-                $wpPostTab->getPkField(),
-                $wpPostTab->getPostTitleField(),
-            ])->order($wpPostTab->getGuidField())->select();
-
-            $totalRow  = count($wpIds);
-            $totalPage = ceil($totalRow / $this->rowPage);
-
-            $allPages = [];
-
-            //主页
-            $allPages[] = [
-                "title" => $this->pageName,
-                "url"   => $this->wpUrl,
-            ];
-
-            //分页
-            for ($i = 1; $i <= $totalPage; $i++)
-            {
-                $allPages[] = [
-                    "title" => $this->pageName . '-Page ' . $i,
-                    "url"   => $this->wpUrl . '/page/' . $i,
-                ];
-            }
-
-            //详细页面
-            foreach ($wpIds as $k => $v)
-            {
-                $allPages[] = [
-                    "title" => $v[$wpPostTab->getPostTitleField()] . ' - ' . $this->pageName,
-                    "url"   => $this->wpUrl . '/archives/' . $v[$wpPostTab->getPkField()],
-                ];
-            }
+            $allPages = $this->makePageUrls();
 
             // 生成开始到结束所有天数
             $dateRange = static::getDateRange($this->startTime, $this->endTime);
@@ -152,6 +103,8 @@
 
             foreach ($dateRange as $k => $day)
             {
+                $uvs = [];
+
                 //对每天生成指定次数的访问时间
                 $timeNodes  = static::generateRandomTimes($day, $uvList[$k]);
                 $totalNodes = count($timeNodes);
@@ -162,7 +115,7 @@
                 {
                     //一个时间代表一个uv，每个uv访问随机几次
                     $session = \Coco\matomo\Session::newIns()->randomDevice();
-                    $uv      = new Uv();
+                    $uv      = new Uv($time);
                     $uv->setSession($session);
 
                     $pageTimes = rand(1, 5);
@@ -219,28 +172,116 @@
                         $pv->setPageUrl($urlInfo['url']);
                         $pv->getUrlTrackPageView($urlInfo['title']);
 
-                        $time = date('Y-m-d H:i:s', strtotime($time) + rand(1, 120));
+                        $time = date('Y-m-d H:i:s', strtotime($time) + rand(1, 50));
 
                         $uv->addPv($pv);
                     }
 
-                    $this->logInfo('第(' . ($k + 1) . '/' . $totalDays . ')天,' . $time . ', 访问UV:' . ($t1 + 1) . '/' . $totalNodes . ',此UV的PV:');
-                    $this->client->addUv($uv);
-
+                    $this->logInfo('第(' . ($k + 1) . '/' . $totalDays . ')天, ' . $time . ', 访问UV: ' . ($t1 + 1) . '/' . $totalNodes . ', 此UV的PV: ' . $uv->getPvCount());
+                    $uvs[] = $uv;
                 }
-                $this->logInfo('发送中');
-                $this->client->sendRequest();
-                $this->logInfo('发送完成');
+
+                $lastTime = 0;
+                while (count($uvs))
+                {
+                    $uvObj = null;
+                    $count = 0;
+                    while ($uvObj = array_shift($uvs))
+                    {
+                        $lastPvTime = $uvObj->getLastViewTime();
+
+                        if (strtotime($lastPvTime) < (time() - $delay))
+                        {
+//                            $this->logInfo('首pv:（' . $uvObj->getViewTime() . '），尾pv:（' . $lastPvTime . '）, pv数: ' . $uvObj->getPvCount() . ', sessionId: ' . $uvObj->getSessionId());
+
+                            $this->client->addUv($uvObj);
+                            $uvObj = null;
+
+                            $count++;
+
+                            $intervalSeconds = 0;
+                        }
+                        else
+                        {
+                            $this->logInfo('下次:（' . $lastPvTime . '）,还剩:' . (strtotime($lastPvTime) - time() + $delay));
+
+                            array_unshift($uvs, $uvObj);
+                            $uvObj = null;
+
+                            $intervalSeconds = 60;
+                            break;
+                        }
+                    }
+
+                    if ($count)
+                    {
+                        $this->logInfo($count . ' 个UV发送中...');
+                        $this->client->sendRequest();
+                        $this->logInfo('发送完成');
+                    }
+
+                    if ($intervalSeconds)
+                    {
+                        $this->logInfo("等{$intervalSeconds}秒...");
+                        sleep($intervalSeconds);
+                    }
+                }
 
             }
         }
 
+        private function makePageUrls(): array
+        {
+            $wpPostTab = $this->wpManager->getPostsTable();
+
+            $wpIds = $wpPostTab->tableIns()->where([
+                [
+                    $wpPostTab->getGuidField(),
+                    'regexp',
+                    '^[0-9]{18,20}$',
+                ],
+            ])->field([
+                $wpPostTab->getPkField(),
+                $wpPostTab->getPostTitleField(),
+            ])->order($wpPostTab->getGuidField())->select();
+
+            $totalRow  = count($wpIds);
+            $totalPage = ceil($totalRow / $this->rowPage);
+
+            $allPages = [];
+
+            //主页
+            $allPages[] = [
+                "title" => $this->pageName,
+                "url"   => $this->wpUrl,
+            ];
+
+            //分页
+            for ($i = 1; $i <= $totalPage; $i++)
+            {
+                $allPages[] = [
+                    "title" => $this->pageName . '-Page ' . $i,
+                    "url"   => $this->wpUrl . '/page/' . $i,
+                ];
+            }
+
+            //详细页面
+            foreach ($wpIds as $k => $v)
+            {
+                $allPages[] = [
+                    "title" => $v[$wpPostTab->getPostTitleField()] . ' - ' . $this->pageName,
+                    "url"   => $this->wpUrl . '/archives/' . $v[$wpPostTab->getPkField()],
+                ];
+            }
+
+            return $allPages;
+        }
 
         private static function getDateRange($startDate, $endDate): array
         {
             // 转换字符串为时间戳
             $start = strtotime($startDate);
-            $end   = strtotime($endDate);
+            $end   = strtotime(date('Y-m-d', strtotime($endDate)) . ' 23:59:59');
 
             $dates = [];
 
@@ -248,21 +289,20 @@
             while ($start <= $end)
             {
                 // 将时间戳格式化为 YYYY-m-d 格式并添加到数组
-                $dates[] = date('Y-m-d', $start);
+                $dates[] = date('Y-m-d H:i:s', $start);
 
                 // 增加一天
-                $start = strtotime('+1 day', $start);
+                $start = strtotime('+1 day', strtotime(date('Y-m-d', $start)));
             }
 
             return $dates;
         }
 
-
         private static function generateRandomTimes($date, $count): array
         {
             // 获取日期的开始和结束时间
-            $startTimestamp = strtotime($date . ' 00:00:00');
-            $endTimestamp   = strtotime($date . ' 23:59:59');
+            $startTimestamp = strtotime($date);
+            $endTimestamp   = strtotime(explode(' ', $date)[0] . ' 23:59:59');
 
             $randomTimes = [];
 
@@ -280,7 +320,6 @@
 
             return $randomTimes;
         }
-
 
         /**
          * 曲线图调试工具 https://www.tubiaoyi.com/smooth-line/
@@ -329,7 +368,7 @@
                     $traffic *= (rand(2, 8) / 10);
                 }
 
-                //有50分之一的几率某天访问量突然上涨到1.2到1.8
+                //有50分之一的几率某天访问量突然上涨到1.2到1.5
                 $l = 50;
                 if (!(rand(1, $l) % $l))
                 {
