@@ -66,7 +66,7 @@
                     $this_->getAttr('href')->setAttrKv('href', $link);
                     $this_->getAttr('target')->setAttrKv('target', $target);
                     $this_->getAttr('style')->importKv([
-                        "word-wrap"    => 'break-word',
+                        "word-wrap" => 'break-word',
                     ]);
                     $this_->attrsRegistry->appendAttrKvArr($kvAttr);
 
@@ -220,7 +220,6 @@
             return DoubleTag::ins('p')
                 ->inner(function(DoubleTag $this_, array &$inner) use ($content, $classes, $fontSize, $fontColor, $backgroundColor) {
                     $this_->getAttr('class')->addAttrsArray($classes);
-
 
                     $attr = [
                         "color"     => $fontColor,

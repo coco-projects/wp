@@ -4,50 +4,59 @@
 
     use Coco\logger\Logger;
     use Coco\matomo\MatomoClient;
+    use Coco\matomo\Pv;
+    use Coco\matomo\Session;
     use Coco\matomo\Uv;
 
-    class VisitorGenerator
+    abstract class VisitorGeneratorBase
     {
         use Logger;
 
         public MatomoClient $client;
 
+        /**
+         * 开始时间可以精确到时分秒
+         *
+         * @var string
+         */
         protected string $startTime;
+
+        /**
+         * 结束时间不用写时分秒，始终到当天晚上 23:59:59
+         *
+         * @var string
+         */
         protected string $endTime;
         protected string $pageName;
 
+        public int    $chunkSize     = 100;
         protected int $lowUv         = 0;
         protected int $hightUv       = 1000;
         protected int $rowPage       = 20;
-        private bool  $enableEchoLog = false;
+        public bool   $enableEchoLog = false;
 
-        public function __construct(string $apiUrl, string $token, int $siteId, protected string $wpUrl, public Manager $wpManager)
+        public function __construct(public int $siteId, public Manager $wpManager, protected string $wpUrl)
         {
-            $this->client = MatomoClient::getClient($apiUrl, $token, $siteId);
-            $this->wpUrl  = trim($wpUrl, '/');
         }
 
-        public function setRowPage(int $rowPage): static
+        /**
+         * 启动后不能关闭，必须常驻内存运行
+         * 生成实时访问记录，持续向后生成
+         *
+         * @return void
+         */
+        abstract public function listenDoWrite(): void;
+
+        public function setStartTime(string $startTime): static
         {
-            $this->rowPage = $rowPage;
+            $this->startTime = $startTime;
 
             return $this;
         }
 
-        public function setChunk(int $chunk): static
+        public function setEndTime(string $endTime): static
         {
-            $this->client->setChunkSize($chunk);
-
-            return $this;
-        }
-
-        public function setEnableEchoLog(bool $enable = true): static
-        {
-            $this->enableEchoLog = $enable;
-            MatomoClient::enableEchoLog($this->enableEchoLog);
-
-            $this->setStandardLogger('VisitorGeneratorLog');
-            $this->addStdoutHandler(callback: $this::getStandardFormatter());
+            $this->endTime = $endTime;
 
             return $this;
         }
@@ -59,38 +68,63 @@
             return $this;
         }
 
-        public function setWpUrl(string $wpUrl): static
+        public function setChunkSize(int $chunkSize): static
         {
-            $this->wpUrl = $wpUrl;
+            $this->chunkSize = $chunkSize;
+
+            return $this;
+        }
+
+        public function setLowUv(int $lowUv): static
+        {
+            $this->lowUv = $lowUv;
+
+            return $this;
+        }
+
+        public function setHightUv(int $hightUv): static
+        {
+            $this->hightUv = $hightUv;
+
+            return $this;
+        }
+
+        public function setRowPage(int $rowPage): static
+        {
+            $this->rowPage = $rowPage;
+
+            return $this;
+        }
+
+        public function setEnableEchoLog(bool $enable = true): static
+        {
+            $this->enableEchoLog = $enable;
+
+            $this->setStandardLogger('VisitorGeneratorLog');
+            $this->addStdoutHandler(callback: $this::getStandardFormatter());
 
             return $this;
         }
 
         /**
-         * 启动后不能关闭，必须常驻内存运行
-         * 生成实时访问记录，持续向后生成
-         *
-         *
-         * @param string $startTime 开始时间可以精确到时分秒
-         * @param string $endTime   结束时间不用写时分秒，始终到当天晚上 23:59:59
-         * @param int    $lowUv
-         * @param int    $aYearUv
+         * @param callable|null $initFunc
+         * @param callable|null $addUvFunc
+         * @param callable|null $writeRecordFunc
          *
          * @return void
          */
-        public function updateLive(string $startTime, string $endTime, int $lowUv, int $aYearUv): void
+        protected function makePagesData(?callable $initFunc, ?callable $addUvFunc, ?callable $writeRecordFunc): void
         {
             //延迟多少秒发送
             $delay           = 60;
             $intervalSeconds = 2;
 
-            $this->startTime = $startTime;
-            $this->endTime   = $endTime;
-
-            $this->lowUv   = $lowUv;
-            $this->hightUv = $aYearUv;
-
             $allPages = $this->makePageUrls();
+
+            if (is_callable($initFunc))
+            {
+                call_user_func_array($initFunc, [$this]);
+            }
 
             // 生成开始到结束所有天数
             $dateRange = static::getDateRange($this->startTime, $this->endTime);
@@ -114,7 +148,7 @@
                 foreach ($timeNodes as $t1 => $time)
                 {
                     //一个时间代表一个uv，每个uv访问随机几次
-                    $session = \Coco\matomo\Session::newIns()->randomDevice();
+                    $session = Session::newIns()->randomDevice();
                     $uv      = new Uv($time);
                     $uv->setSession($session);
 
@@ -162,7 +196,7 @@
                             $referer = $refererInfo['url'];
                         }
 
-                        $pv = new \Coco\matomo\Pv();
+                        $pv = new Pv();
                         $t  = explode(' ', $time);
                         $pv->setLocalTime($t[1]);
 
@@ -194,7 +228,14 @@
                         {
 //                            $this->logInfo('首pv:（' . $uvObj->getViewTime() . '），尾pv:（' . $lastPvTime . '）, pv数: ' . $uvObj->getPvCount() . ', sessionId: ' . $uvObj->getSessionId());
 
-                            $this->client->addUv($uvObj);
+                            if (is_callable($addUvFunc))
+                            {
+                                call_user_func_array($addUvFunc, [
+                                    $uvObj,
+                                    $this,
+                                ]);
+                            }
+
                             $uvObj = null;
 
                             $count++;
@@ -216,7 +257,12 @@
                     if ($count)
                     {
                         $this->logInfo($count . ' 个UV发送中...');
-                        $this->client->sendRequest();
+
+                        if (is_callable($writeRecordFunc))
+                        {
+                            call_user_func_array($writeRecordFunc, [$this]);
+                        }
+
                         $this->logInfo('发送完成');
                     }
 
@@ -230,7 +276,7 @@
             }
         }
 
-        private function makePageUrls(): array
+        protected function makePageUrls(): array
         {
             $wpPostTab = $this->wpManager->getPostsTable();
 
@@ -277,7 +323,15 @@
             return $allPages;
         }
 
-        private static function getDateRange($startDate, $endDate): array
+        /**
+         * 生成天数数组
+         *
+         * @param string $startDate 开始时间可以精确到时分秒
+         * @param string $endDate   结束时间不用写时分秒，始终到当天晚上 23:59:59
+         *
+         * @return array 2025-9-02 22:33:31
+         */
+        protected static function getDateRange(string $startDate, string $endDate): array
         {
             // 转换字符串为时间戳
             $start = strtotime($startDate);
@@ -298,7 +352,15 @@
             return $dates;
         }
 
-        private static function generateRandomTimes($date, $count): array
+        /**
+         * 生成一天中随机的时间点
+         *
+         * @param $date
+         * @param $count
+         *
+         * @return array
+         */
+        protected static function generateRandomTimes($date, $count): array
         {
             // 获取日期的开始和结束时间
             $startTimestamp = strtotime($date);
@@ -332,7 +394,7 @@
          *
          * @return array
          */
-        private static function generateTrafficData(int $start, int $end, int $days, int $initialFluctuationRange = 2): array
+        protected static function generateTrafficData(int $start, int $end, int $days, int $initialFluctuationRange = 2): array
         {
             // 初始化一个空数组来存储访问量数据
             $trafficData = [];
@@ -381,6 +443,4 @@
 
             return $trafficData;
         }
-
-
     }
