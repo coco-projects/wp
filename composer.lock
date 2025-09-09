@@ -133,16 +133,16 @@
         },
         {
             "name": "coco-project/matomo-client",
-            "version": "v1.0.4",
+            "version": "v1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/coco-projects/matomo-client.git",
-                "reference": "60298178f585555fe20d1f2286656399f2ade24e"
+                "reference": "6dc94849b142a71a57de407ce730622fad32de6a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/coco-projects/matomo-client/zipball/60298178f585555fe20d1f2286656399f2ade24e",
-                "reference": "60298178f585555fe20d1f2286656399f2ade24e",
+                "url": "https://api.github.com/repos/coco-projects/matomo-client/zipball/6dc94849b142a71a57de407ce730622fad32de6a",
+                "reference": "6dc94849b142a71a57de407ce730622fad32de6a",
                 "shasum": ""
             },
             "require": {
@@ -169,9 +169,9 @@
             ],
             "support": {
                 "issues": "https://github.com/coco-projects/matomo-client/issues",
-                "source": "https://github.com/coco-projects/matomo-client/tree/v1.0.4"
+                "source": "https://github.com/coco-projects/matomo-client/tree/v1.0.5"
             },
-            "time": "2025-09-07T13:56:53+00:00"
+            "time": "2025-09-09T15:19:58+00:00"
         },
         {
             "name": "coco-project/simple-page-downloader",

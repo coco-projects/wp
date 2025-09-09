@@ -19,21 +19,21 @@
          *
          * @var string
          */
-        protected string $startTime;
+        public string $startTime;
 
         /**
          * 结束时间不用写时分秒，始终到当天晚上 23:59:59
          *
          * @var string
          */
-        protected string $endTime;
-        protected string $pageName;
+        public string $endTime;
+        public string $pageName;
 
-        public int    $chunkSize     = 100;
-        protected int $lowUv         = 0;
-        protected int $hightUv       = 1000;
-        protected int $rowPage       = 20;
-        public bool   $enableEchoLog = false;
+        public int  $chunkSize     = 100;
+        public int  $lowUv         = 0;
+        public int  $hightUv       = 1000;
+        public int  $rowPage       = 20;
+        public bool $enableEchoLog = false;
 
         public function __construct(public int $siteId, public Manager $wpManager, protected string $wpUrl)
         {
