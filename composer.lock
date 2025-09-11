@@ -133,16 +133,16 @@
         },
         {
             "name": "coco-project/matomo-client",
-            "version": "v1.0.5",
+            "version": "v1.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/coco-projects/matomo-client.git",
-                "reference": "6dc94849b142a71a57de407ce730622fad32de6a"
+                "reference": "a68bf9fe4159a434bd54f8a75dc2d9c37d587c82"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/coco-projects/matomo-client/zipball/6dc94849b142a71a57de407ce730622fad32de6a",
-                "reference": "6dc94849b142a71a57de407ce730622fad32de6a",
+                "url": "https://api.github.com/repos/coco-projects/matomo-client/zipball/a68bf9fe4159a434bd54f8a75dc2d9c37d587c82",
+                "reference": "a68bf9fe4159a434bd54f8a75dc2d9c37d587c82",
                 "shasum": ""
             },
             "require": {
@@ -169,9 +169,9 @@
             ],
             "support": {
                 "issues": "https://github.com/coco-projects/matomo-client/issues",
-                "source": "https://github.com/coco-projects/matomo-client/tree/v1.0.5"
+                "source": "https://github.com/coco-projects/matomo-client/tree/v1.0.6"
             },
-            "time": "2025-09-09T15:19:58+00:00"
+            "time": "2025-09-11T09:47:33+00:00"
         },
         {
             "name": "coco-project/simple-page-downloader",
@@ -2675,16 +2675,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "9.6.25",
+            "version": "9.6.26",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "049c011e01be805202d8eebedef49f769a8ec7b7"
+                "reference": "a0139ea157533454f611038326f3020b3051f129"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/049c011e01be805202d8eebedef49f769a8ec7b7",
-                "reference": "049c011e01be805202d8eebedef49f769a8ec7b7",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/a0139ea157533454f611038326f3020b3051f129",
+                "reference": "a0139ea157533454f611038326f3020b3051f129",
                 "shasum": ""
             },
             "require": {
@@ -2758,7 +2758,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.6.25"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.6.26"
             },
             "funding": [
                 {
@@ -2782,7 +2782,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-08-20T14:38:31+00:00"
+            "time": "2025-09-11T06:17:45+00:00"
         },
         {
             "name": "sebastian/cli-parser",
