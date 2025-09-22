@@ -37,6 +37,7 @@
 
         public function __construct(public int $siteId, public Manager $wpManager, protected string $wpUrl)
         {
+            $this->wpUrl = rtrim($this->wpUrl, '/');
         }
 
         /**
@@ -220,6 +221,8 @@
                 {
                     $uvObj = null;
                     $count = 0;
+                    $msg   = '等待中....';
+
                     while ($uvObj = array_shift($uvs))
                     {
                         $lastPvTime = $uvObj->getLastViewTime();
@@ -241,15 +244,21 @@
                             $count++;
 
                             $intervalSeconds = 0;
+
+                            $msg = '正常发送';
                         }
                         else
                         {
-                            $this->logInfo('下次:（' . $lastPvTime . '）,还剩:' . (strtotime($lastPvTime) - time() + $delay));
+                            $msg = implode('', [
+                                '下次触发:（' . date('Y-m-d H:i:s', strtotime($lastPvTime) + $delay),
+                                ", 还剩秒:" . (strtotime($lastPvTime) - time() + $delay) . '）',
+                                ", 入库时间:（ $lastPvTime ）",
+                            ]);
 
                             array_unshift($uvs, $uvObj);
                             $uvObj = null;
 
-                            $intervalSeconds = 60;
+                            $intervalSeconds = 5;
                             break;
                         }
                     }
@@ -268,7 +277,7 @@
 
                     if ($intervalSeconds)
                     {
-                        $this->logInfo("等{$intervalSeconds}秒...");
+                        $this->logInfo("等{$intervalSeconds}秒，" . $msg);
                         sleep($intervalSeconds);
                     }
                 }

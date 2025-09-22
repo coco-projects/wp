@@ -14,12 +14,12 @@
     $wpUrl = "http://dev6080/";
 
     //开始时间可以精确到时分秒
-    $startTime = '2025-03-20';
+    $startTime = '2025-09-20';
     $lowUv     = 80;
 
     //结束时间不用写时分秒，始终到当天晚上 23:59:59
-    $endTime = '2025-08-25';
-    $aYearUv = 500;
+    $endTime = '2025-09-25';
+    $aYearUv = 5000;
 
     $initFunc = function(VisitorGeneratorGeneral $_this) {
         MatomoWebApiClient::initLogger('VisitorGeneratorByInsertToDb', $_this->enableEchoLog);
