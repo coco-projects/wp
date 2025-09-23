@@ -11,6 +11,8 @@
 
         public function listenDoWrite(): void
         {
+            date_default_timezone_set('Asia/Shanghai');
+
             $this->makePagesData($this->initFunc, $this->addUvFunc, $this->writeRecordFunc);
         }
     }

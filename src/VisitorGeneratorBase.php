@@ -183,11 +183,11 @@
                         $seek = rand(1, 3);
                         if ($seek == 1)
                         {
-                            $referer = $session->faker->searchEngineUrlWithOutKeyword();
+                            $referer = '';
                         }
                         elseif ($seek == 2)
                         {
-                            $referer = '';
+                            $referer = $session->faker->searchEngineUrlWithOutKeyword();
                         }
                         else
                         {
@@ -212,7 +212,7 @@
                         $uv->addPv($pv);
                     }
 
-                    $this->logInfo('第(' . ($k + 1) . '/' . $totalDays . ')天, ' . $time . ', 访问UV: ' . ($t1 + 1) . '/' . $totalNodes . ', 此UV的PV: ' . $uv->getPvCount());
+                    $this->logInfo("第(" . ($k + 1) . '/' . $totalDays . ')天, ' . $time . ', 访问UV: ' . ($t1 + 1) . '/' . $totalNodes . ', 此UV的PV: ' . $uv->getPvCount());
                     $uvs[] = $uv;
                 }
 
@@ -250,8 +250,8 @@
                         else
                         {
                             $msg = implode('', [
-                                '下次触发:（' . date('Y-m-d H:i:s', strtotime($lastPvTime) + $delay),
-                                ", 还剩秒:" . (strtotime($lastPvTime) - time() + $delay) . '）',
+                                '下次触发:（' . date('Y-m-d H:i:s', strtotime($lastPvTime) + $delay). '）',
+                                ", 还剩秒:" . (strtotime($lastPvTime) - time() + $delay) ,
                                 ", 入库时间:（ $lastPvTime ）",
                             ]);
 
@@ -272,7 +272,7 @@
                             call_user_func_array($writeRecordFunc, [$this]);
                         }
 
-                        $this->logInfo('发送完成');
+                        $this->logInfo("发送完成");
                     }
 
                     if ($intervalSeconds)
@@ -281,7 +281,6 @@
                         sleep($intervalSeconds);
                     }
                 }
-
             }
         }
 

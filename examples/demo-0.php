@@ -3,6 +3,7 @@
     use Coco\wp\VisitorGeneratorByWebApi;
 
     require 'common.php';
+    @date_default_timezone_set('UTC');
 
     $matomoSiteId = 1;
     $apiUrl       = "http://dev6058/";

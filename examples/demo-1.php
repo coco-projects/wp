@@ -6,6 +6,7 @@
     use Coco\wp\VisitorGeneratorGeneral;
 
     require 'common.php';
+    @date_default_timezone_set('UTC');
 
     $matomoSiteId = 1;
     $apiUrl       = "http://dev6058/";
@@ -40,9 +41,13 @@
             foreach ($uvsChunk as $k => $uv)
             {
                 $data[] = $uv->makeDataPair($_this->siteId);
+
+                echo $uv->getLastViewTime();
+                echo PHP_EOL;
             }
 
-            print_r($data);
+//            print_r($data);
+
         });
 
     };

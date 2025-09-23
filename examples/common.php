@@ -4,6 +4,7 @@
 
     require '../vendor/autoload.php';
 
+
     $manager = new Manager('redis_namespace');
 
     $manager->setRedisConfig(db: 14);
