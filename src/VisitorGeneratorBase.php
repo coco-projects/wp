@@ -250,8 +250,8 @@
                         else
                         {
                             $msg = implode('', [
-                                '下次触发:（' . date('Y-m-d H:i:s', strtotime($lastPvTime) + $delay). '）',
-                                ", 还剩秒:" . (strtotime($lastPvTime) - time() + $delay) ,
+                                '下次触发:（' . date('Y-m-d H:i:s', strtotime($lastPvTime) + $delay) . '）',
+                                ", 还剩秒:" . (strtotime($lastPvTime) - time() + $delay),
                                 ", 入库时间:（ $lastPvTime ）",
                             ]);
 
@@ -420,25 +420,31 @@
                 $basicTraffic = $start + ($totalIncrease * $growthFactor);
 
                 // 控制波动范围（波动范围随着天数逐渐增大）
-                $fluctuationRange = $initialFluctuationRange * exp($i / $days);      // 使用指数增长模拟波动
+                $fluctuationRange = $initialFluctuationRange * exp($i / $days) * rand(20, 500) / 100; // 80%~150%的随机放大
 
                 // 随机确定波动方向：有可能是正向（增长），也有可能是负向（回落）
-                $randomFactor = rand(0, 1) == 0 ? -1 : 1;                            // 随机决定是增加还是减少访问量
+                $randomFactor = rand(0, 1) == 0 ? -1 : 1;                                             // 随机决定是增加还是减少访问量
 
                 // 给访问量加上一个随机的波动（模拟真实的变化）
-                $fluctuation = rand(0, (int)$fluctuationRange) * $randomFactor;      // 随机决定波动方向
+                $fluctuation = rand(0, (int)$fluctuationRange) * $randomFactor;
+
+                // 引入周期性波动，例如使用正弦波来增加自然的起伏
+                $periodicFluctuation = sin($i / ($days / (rand(1, 10)))) * $fluctuationRange * (rand(5, 50) / 10);
+
+                // 综合基本波动和周期性波动
+                $totalFluctuation = $fluctuation + $periodicFluctuation;
 
                 // 确保访问量不为负数
-                $traffic = max(0, $basicTraffic + $fluctuation);
+                $traffic = max(0, $basicTraffic + $totalFluctuation);
 
-                //有12分之一的几率某天访问量突然降低到0.2到0.8
+                // 有12分之一的几率某天访问量突然降低到0.2到0.8
                 $h = 12;
                 if (!(rand(1, $h) % $h))
                 {
                     $traffic *= (rand(2, 8) / 10);
                 }
 
-                //有50分之一的几率某天访问量突然上涨到1.2到1.5
+                // 有50分之一的几率某天访问量突然上涨到1.2到1.5
                 $l = 50;
                 if (!(rand(1, $l) % $l))
                 {
@@ -451,4 +457,5 @@
 
             return $trafficData;
         }
+
     }
