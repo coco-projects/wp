@@ -1781,19 +1781,17 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                             $postmetaTable->getMetaValueField() => round(bcsqrt($k)) * rand($viewsMin, $viewsMax),
                         ];
 
-                        echo implode('', [
+                        $this->getMysqlClient()->logInfo(implode('', [
                             $id,
                             '-更新【none-force】',
-                            PHP_EOL,
-                        ]);
+                        ]));
                     }
                     else
                     {
-                        echo implode('', [
+                        $this->getMysqlClient()->logInfo(implode('', [
                             $id,
                             '-没更新【none-force】',
-                            PHP_EOL,
-                        ]);
+                        ]));
                     }
                 }
 
@@ -1808,11 +1806,10 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                         $postmetaTable->getMetaValueField() => round(bcsqrt($k)) * rand($viewsMin, $viewsMax),
                     ];
 
-                    echo implode('', [
+                    $this->getMysqlClient()->logInfo(implode('', [
                         $id,
                         '-更新【force】',
-                        PHP_EOL,
-                    ]);
+                    ]));
                 }
 
                 $postmetaTable->tableIns()->where([
@@ -1880,12 +1877,11 @@ WHERE `wp_term_taxonomy`.`taxonomy` = 'category'
                         ->whereTime($postsTable->getPostDateField(), '-1 month')->update($dataToInsert);
                 }
 
-                echo implode('', [
+                $this->getMysqlClient()->logInfo(implode('', [
                     $id['ID'],
                     '-',
-                    $c ? '已更新: '.$date_ : '不更',
-                    PHP_EOL,
-                ]);
+                    $c ? '已更新: ' . $date_ : '不更',
+                ]));
 
                 $itemPerTimes--;
 
