@@ -133,16 +133,16 @@
         },
         {
             "name": "coco-project/matomo-client",
-            "version": "v1.0.6",
+            "version": "v1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/coco-projects/matomo-client.git",
-                "reference": "a68bf9fe4159a434bd54f8a75dc2d9c37d587c82"
+                "reference": "ccbdd31a6273944003631dea865d33dd6478c56e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/coco-projects/matomo-client/zipball/a68bf9fe4159a434bd54f8a75dc2d9c37d587c82",
-                "reference": "a68bf9fe4159a434bd54f8a75dc2d9c37d587c82",
+                "url": "https://api.github.com/repos/coco-projects/matomo-client/zipball/ccbdd31a6273944003631dea865d33dd6478c56e",
+                "reference": "ccbdd31a6273944003631dea865d33dd6478c56e",
                 "shasum": ""
             },
             "require": {
@@ -169,22 +169,22 @@
             ],
             "support": {
                 "issues": "https://github.com/coco-projects/matomo-client/issues",
-                "source": "https://github.com/coco-projects/matomo-client/tree/v1.0.6"
+                "source": "https://github.com/coco-projects/matomo-client/tree/v1.0.7"
             },
-            "time": "2025-09-11T09:47:33+00:00"
+            "time": "2025-10-31T14:39:29+00:00"
         },
         {
             "name": "coco-project/simple-page-downloader",
-            "version": "v1.0.16",
+            "version": "v1.0.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/coco-projects/simple-page-downloader.git",
-                "reference": "2068af3739be9c16632297075baf12a3b0d75044"
+                "reference": "a5c056017c1afa7453cd1fd0694c7f89f0c5afff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/coco-projects/simple-page-downloader/zipball/2068af3739be9c16632297075baf12a3b0d75044",
-                "reference": "2068af3739be9c16632297075baf12a3b0d75044",
+                "url": "https://api.github.com/repos/coco-projects/simple-page-downloader/zipball/a5c056017c1afa7453cd1fd0694c7f89f0c5afff",
+                "reference": "a5c056017c1afa7453cd1fd0694c7f89f0c5afff",
                 "shasum": ""
             },
             "require": {
@@ -213,9 +213,9 @@
             "description": "page downloader",
             "support": {
                 "issues": "https://github.com/coco-projects/simple-page-downloader/issues",
-                "source": "https://github.com/coco-projects/simple-page-downloader/tree/v1.0.16"
+                "source": "https://github.com/coco-projects/simple-page-downloader/tree/v1.0.17"
             },
-            "time": "2025-05-23T14:36:49+00:00"
+            "time": "2025-10-31T14:25:15+00:00"
         },
         {
             "name": "coco-project/snowflake",
